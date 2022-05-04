@@ -1,11 +1,13 @@
 import argparse
 import numpy as np
 import glob
+import os
 from sklearn.model_selection import train_test_split
 
 from utils.utils import DataGenerator
-from train.train_gan import fit_gan
-from train.train_unet import fit_unet
+from models.unet_model import UNet3D
+from models.gan_model import GAN
+from models.att_unet_model import AttUnet3D
 
 
 parser = argparse.ArgumentParser("BTS Training and validation", add_help=False)
@@ -28,6 +30,12 @@ parser.add_argument(
     help="fraction of data for evaluation",
 )
 parser.add_argument("-m", "--model", default="unet", type=str, help="model")
+parser.add_argument(
+    "-lr", "--learning_rate", default=1e-3, type=float, help="learning rate"
+)
+parser.add_argument(
+    "-b1", "--beta_1", default=0.9, type=float, help="beta1 for momentum"
+)
 
 
 args = parser.parse_args()
@@ -38,8 +46,13 @@ alpha = args.alpha
 n_epochs = args.num_epochs
 eval_frac = args.eval_frac
 model = args.model
+lr = args.learning_rate
+beta_1 = args.beta_1
 
 classes = np.arange(n_classes)
+# class weights
+class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f")
+
 
 # images lists
 t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))
@@ -83,9 +96,17 @@ valid_gen = DataGenerator(
 
 if model == "unet":
     # train the unet model
-    history = fit_unet(train_gen, valid_gen, alpha, n_epochs)
+    path = os.path.join(".", "RESULTS", model)
+    unet = UNet3D(patch_size, n_classes, class_weights, path, lr, beta_1)
+    history = unet.train(train_gen, valid_gen, n_epochs)
+
 elif model == "att_unet":
-    pass
+    path = os.path.join(".", "RESULTS", model)
+    att_unet = AttUnet3D()
+    history = att_unet.train(train_gen, valid_gen, n_epochs)
+
 elif model == "gan":
     # train the vox2vox model
-    history = fit_gan(train_gen, valid_gen, alpha, n_epochs)
+    path = os.path.join(".", "RESULTS", model)
+    gan = GAN()
+    history = gan.train(train_gen, valid_gen, alpha, n_epochs)
