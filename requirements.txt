@@ -1,0 +1,9 @@
+elasticdeform
+matplotlib
+numpy
+scikit-learn
+scipy
+tensorflow
+tensorflow-addons
+tensorflow-cpu
+mlflow
