@@ -20,7 +20,7 @@ parser.add_argument("-bs", "--batch_size", default=4, type=int, help="batch size
 parser.add_argument("-ps", "--patch_size", default=128, type=int, help="patch size")
 parser.add_argument("-a", "--alpha", default=5, type=int, help="alpha weight")
 parser.add_argument(
-    "-ne", "--num_epochs", default=200, type=int, help="number of epochs"
+    "-ne", "--num_epochs", default=1, type=int, help="number of epochs"
 )
 parser.add_argument(
     "-ef",
