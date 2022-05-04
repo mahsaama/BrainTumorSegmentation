@@ -53,6 +53,9 @@ classes = np.arange(n_classes)
 # class weights
 class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f")
 
+# uncomment the code below to see the input images modalities and mask
+# show_folder_images("../Dataset_BRATS_2020/Training/BraTS20_Training_001/")
+# show_folder_images("../Dataset_BRATS_2020/Validation/BraTS20_Validation_001/")
 
 # images lists
 t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))

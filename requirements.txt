@@ -7,3 +7,4 @@ tensorflow-addons
 tensorflow-cpu
 nibabel
 SimpleITK
+matplotlib

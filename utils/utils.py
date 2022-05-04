@@ -3,6 +3,24 @@ import tensorflow as tf
 import nibabel as nib
 from tensorflow.keras.utils import to_categorical
 from augmentation import *
+import SimpleITK as sitk
+import matplotlib.pyplot as plt
+import os
+
+
+def show_folder_images(url):
+    fig = plt.figure(figsize=(15, 3))
+    i = 0
+    for root, dirs, files in os.walk(url):
+        for fil in files:
+            i += 1
+            path = os.path.join(url, fil)
+            image = sitk.ReadImage(path)
+            z = int(image.GetDepth() / 2)
+            img = sitk.GetArrayViewFromImage(image)[z, :, :]
+            fig.add_subplot(1, len(files), i)
+            plt.imshow(img)
+            plt.title(fil.split("_")[-1].split(".")[0])
 
 
 def milisec_to_minute(milisec):
