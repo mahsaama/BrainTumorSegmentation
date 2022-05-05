@@ -4,7 +4,6 @@ scikit-learn
 scipy
 tensorflow
 tensorflow-addons
-tensorflow-cpu
 nibabel
 SimpleITK
 matplotlib
