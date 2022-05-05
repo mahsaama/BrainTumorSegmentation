@@ -26,7 +26,7 @@ class GAN:
         self.class_weights = class_weights
         self.G_optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
         self.D_optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
-        self.result_path = path
+        self.path = path
         self.G, self.D = self.build()
 
     def Generator(self):

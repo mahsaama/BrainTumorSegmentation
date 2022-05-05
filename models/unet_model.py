@@ -23,7 +23,7 @@ class UNet3D:
         self.n_classes = n_classes
         self.class_weights = class_weights
         self.optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
-        self.result_path = path
+        self.path = path
         self.model = self.build()
 
     def build(self):
