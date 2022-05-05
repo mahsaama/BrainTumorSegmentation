@@ -110,6 +110,7 @@ if model == "unet":
     history = unet.train(train_gen, valid_gen, n_epochs)
 
 elif model == "att_unet":
+    # train the attention unet model
     path = os.path.join(".", "RESULTS", model)
     att_unet = AttUnet3D(patch_size, n_classes, class_weights, path, lr, beta_1)
     history = att_unet.train(train_gen, valid_gen, n_epochs)
