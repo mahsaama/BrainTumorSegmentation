@@ -24,8 +24,8 @@ class GAN:
         self.patch_size = patch_size
         self.n_classes = n_classes
         self.class_weights = class_weights
-        self.G_optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
-        self.D_optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
+        self.G_optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
+        self.D_optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
         self.path = path
         self.G, self.D = self.build()
 

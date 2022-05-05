@@ -22,7 +22,7 @@ class UNet3D:
         self.patch_size = patch_size
         self.n_classes = n_classes
         self.class_weights = class_weights
-        self.optimizer = tf.keras.optimizers.Adam(lr=lr, beta_1=beta_1)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
         self.path = path
         self.model = self.build()
 
