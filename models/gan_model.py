@@ -2,7 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from utils.losses import discriminator_loss, generator_loss
-from utils.utils import milisec_to_minute
+from utils.utils import sec_to_minute
 from sys import stdout
 import matplotlib.image as mpim
 import time
@@ -301,5 +301,5 @@ class GAN:
             epoch_dp_val.reset_states()
             
             del Xb, yb, canvas, y_pred, y_true, idx
-            print('Time: {}\n'.format(milisec_to_minute(time.time()-start)))        
+            print('Time: {}\n'.format(sec_to_minute(time.time()-start)))        
         return history

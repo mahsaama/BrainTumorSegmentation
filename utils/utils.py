@@ -23,14 +23,12 @@ def show_folder_images(url):
             plt.title(fil.split("_")[-1].split(".")[0])
 
 
-def milisec_to_minute(milisec):
-    seconds = (milisec / 1000) % 60
-    seconds = int(seconds)
-    minutes = (milisec / (1000 * 60)) % 60
-    minutes = int(minutes)
-    hours = (milisec / (1000 * 60 * 60)) % 24
+def sec_to_minute(sec):
+    seconds = int(sec % 60)
+    minutes = int((sec / 60) % 60)
+    hours = int((sec / (60 * 60)) % 24)
 
-    return f"{hours}:{minutes}:{seconds}"
+    return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
 
 
 def load_img(img_files):

@@ -2,7 +2,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from utils.losses import diceLoss
-from utils.utils import milisec_to_minute
+from utils.utils import sec_to_minute
 import matplotlib.image as mpim
 from sys import stdout
 import time
@@ -199,5 +199,5 @@ class UNet3D:
             epoch_dice_loss_percent_val.reset_states()
 
             del Xb, yb, canvas, y_pred, y_true, idx
-            print("Time: {}\n".format(milisec_to_minute(time.time() - start)))
+            print("Time: {}\n".format(sec_to_minute(time.time() - start)))
         return history
