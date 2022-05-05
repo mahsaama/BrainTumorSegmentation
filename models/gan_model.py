@@ -239,7 +239,6 @@ class GAN:
             start = time.time()
             b = 0
             for Xb, yb in train_gen:
-                print(Xb.shape, yb.shape)
                 b += 1
                 losses = self.train_step(Xb, yb)
                 epoch_v2v_loss.update_state(losses[0])
