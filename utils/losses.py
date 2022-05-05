@@ -2,7 +2,7 @@ import tensorflow as tf
 
 # class FocalLoss(nn.modules.loss._WeightedLoss):
 
-#     def __init__(self, gamma=0, size_average=None, ignore_index=-100,
+#     def __init__(self, gamma=2, size_average=None, ignore_index=-100,
 #                  reduce=None, balance_param=1.0):
 #         super(FocalLoss, self).__init__(size_average)
 #         self.gamma = gamma

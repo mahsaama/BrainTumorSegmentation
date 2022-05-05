@@ -101,8 +101,8 @@ valid_gen = DataGenerator(
 results_path = os.path.join(".", "RESULTS")
 if os.path.exists(results_path) == False:
     os.mkdir(results_path)
-            
-            
+
+
 if model == "unet":
     # train the unet model
     path = os.path.join(".", "RESULTS", model)
@@ -111,7 +111,7 @@ if model == "unet":
 
 elif model == "att_unet":
     path = os.path.join(".", "RESULTS", model)
-    att_unet = AttUnet3D()
+    att_unet = AttUnet3D(patch_size, n_classes, class_weights, path, lr, beta_1)
     history = att_unet.train(train_gen, valid_gen, n_epochs)
 
 elif model == "gan":
