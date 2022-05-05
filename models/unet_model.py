@@ -147,7 +147,7 @@ class UNet3D:
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
             stdout.write(
-                "\n               loss_val: {:.4f} - dice_loss_val: {:.4f} - dice_percentage: {:.4f}% ".format(
+                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
                     epoch_dice_loss_val.result(), epoch_dice_loss_percent_val.result()
                 )
             )

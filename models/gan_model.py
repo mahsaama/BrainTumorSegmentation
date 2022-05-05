@@ -258,7 +258,7 @@ class GAN:
                 epoch_disc_loss_val.update_state(losses_val[2])
                 epoch_dp_val.update_state(losses_val[3])
                 
-            stdout.write('\n               loss_val: {:.4f} - dice_loss_val: {:.4f} - disc_loss_val: {:.4f} - dice_percentage: {:.4f}% '
+            stdout.write('\n               loss_val: {:.4f} - dice_loss_val: {:.4f} - disc_loss_val: {:.4f} - dice_percentage_val: {:.4f}% '
                         .format(epoch_v2v_loss_val.result(), epoch_dice_loss_val.result(), epoch_disc_loss_val.result(), epoch_dp_val.result()))
             stdout.flush()
             history['valid'].append([epoch_v2v_loss_val.result(), epoch_dice_loss_val.result(), epoch_disc_loss_val.result(), epoch_dp_val.result()])
