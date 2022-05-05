@@ -113,5 +113,5 @@ elif model == "att_unet":
 elif model == "gan":
     # train the vox2vox model
     path = os.path.join(".", "RESULTS", model)
-    gan = GAN()
+    gan = GAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
     history = gan.train(train_gen, valid_gen, alpha, n_epochs)

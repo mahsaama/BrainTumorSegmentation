@@ -20,13 +20,14 @@ from tensorflow_addons.layers import InstanceNormalization
 
 
 class GAN:
-    def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
+    def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5, alpha=5):
         self.patch_size = patch_size
         self.n_classes = n_classes
         self.class_weights = class_weights
         self.G_optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
         self.D_optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
         self.path = path
+        self.alpha = alpha
         self.G, self.D = self.build()
 
     def Generator(self):
@@ -184,7 +185,7 @@ class GAN:
         return self.Generator(), self.Discriminator()
 
     @tf.function
-    def train_step(self, image, target, alpha):
+    def train_step(self, image, target):
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
 
             gen_output = self.G(image, training=True)
@@ -193,7 +194,7 @@ class GAN:
             disc_fake_output = self.D([image, gen_output], training=True)
             
             disc_loss = discriminator_loss(disc_real_output, disc_fake_output)
-            gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, alpha)
+            gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, self.alpha)
 
         generator_gradients = gen_tape.gradient(gen_loss, self.G.trainable_variables)
         discriminator_gradients = disc_tape.gradient(disc_loss, self.D.trainable_variables)
@@ -204,18 +205,18 @@ class GAN:
         return gen_loss, dice_loss, disc_loss_gen, dice_percent
             
     @tf.function
-    def test_step(self, image, target, alpha):
+    def test_step(self, image, target):
         gen_output = self.G(image, training=False)
 
         disc_real_output = self.D([image, target], training=False)
         disc_fake_output = self.D([image, gen_output], training=False)
         
         disc_loss = discriminator_loss(disc_real_output, disc_fake_output)
-        gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, alpha)
+        gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, self.alpha)
         
         return gen_loss, dice_loss, disc_loss_gen, dice_percent
 
-    def fit(self, train_gen, valid_gen, alpha, epochs):
+    def train(self, train_gen, valid_gen, epochs):
 
         if os.path.exists(self.path)==False:
             os.mkdir(self.path)
@@ -240,7 +241,7 @@ class GAN:
             for Xb, yb in train_gen:
                 print(Xb.shape, yb.shape)
                 b += 1
-                losses = self.train_step(Xb, yb, alpha)
+                losses = self.train_step(Xb, yb)
                 epoch_v2v_loss.update_state(losses[0])
                 epoch_dice_loss.update_state(losses[1])
                 epoch_disc_loss.update_state(losses[2])
@@ -252,7 +253,7 @@ class GAN:
             history['train'].append([epoch_v2v_loss.result(), epoch_dice_loss.result(), epoch_disc_loss.result(), epoch_dp.result()])
             
             for Xb, yb in valid_gen:
-                losses_val = self.test_step(Xb, yb, alpha)
+                losses_val = self.test_step(Xb, yb)
                 epoch_v2v_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_val.update_state(losses_val[1])
                 epoch_disc_loss_val.update_state(losses_val[2])
