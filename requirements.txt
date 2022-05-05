@@ -8,3 +8,4 @@ tensorflow-cpu
 nibabel
 SimpleITK
 matplotlib
+scikit-image

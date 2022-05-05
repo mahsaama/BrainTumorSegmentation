@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import tensorflow as tf
-from utils.losses import diceLoss, milisec_to_minute
+from utils.losses import diceLoss
+from utils.utils import milisec_to_minute
 import matplotlib.image as mpim
 from sys import stdout
 import time

@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import nibabel as nib
 from tensorflow.keras.utils import to_categorical
-from augmentation import *
+from .augmentation import *
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import os

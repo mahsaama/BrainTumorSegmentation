@@ -1,7 +1,8 @@
 import os
 import numpy as np
 import tensorflow as tf
-from utils.losses import discriminator_loss, generator_loss, milisec_to_minute
+from utils.losses import discriminator_loss, generator_loss
+from utils.utils import milisec_to_minute
 from sys import stdout
 import matplotlib.image as mpim
 import time
