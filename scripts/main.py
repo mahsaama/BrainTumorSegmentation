@@ -34,6 +34,9 @@ parser.add_argument(
 parser.add_argument(
     "-b1", "--beta_1", default=0.9, type=float, help="beta1 for momentum"
 )
+parser.add_argument(
+    "-ds", "--data_size", default=369, type=int, help="number of data to use(<370)"
+)
 
 
 args = parser.parse_args()
@@ -46,6 +49,7 @@ eval_frac = args.eval_frac
 model = args.model
 lr = args.learning_rate
 beta_1 = args.beta_1
+ds = args.data_size
 
 classes = np.arange(n_classes)
 # class weights
@@ -56,11 +60,11 @@ class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f"
 # show_folder_images("../Dataset_BRATS_2020/Validation/BraTS20_Validation_001/")
 
 # images lists
-t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))
-t2_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t2.nii.gz"))
-t1ce_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1ce.nii.gz"))
-flair_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*flair.nii.gz"))
-seg_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*seg.nii.gz"))
+t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))[:ds]
+t2_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t2.nii.gz"))[:ds]
+t1ce_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1ce.nii.gz"))[:ds]
+flair_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*flair.nii.gz"))[:ds]
+seg_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*seg.nii.gz"))[:ds]
 
 # create the training and validation sets
 n_data = len(t1_list)
