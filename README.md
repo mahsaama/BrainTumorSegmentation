@@ -13,6 +13,29 @@ Dataset: [BraTS2020 dataset](https://ipp.cbica.upenn.edu/categories/brats2020)
 
 ![validation image](images/validation_image.png)
 
+
+Preprocess and Augmentation:
+
+1. Flip
+![horizontal flip](images/flip_x.png)
+![vertical flip](images/flip_y.png)
+
+2. Brightness
+![brightness](images/brightness.png)
+
+3. Rotation
+![rotation](images/rotation.png)
+
+4. Elastic
+![elastic](images/elastic.png)
+
+5. Shift
+![shift](images/shift.png)
+
+6. Swirl
+![swirl](images/swirl.png)
+
+
 Requirements:
 - tensorflow
 - tensorflow-addons

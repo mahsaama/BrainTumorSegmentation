@@ -170,17 +170,15 @@ def elastic(X, y):
     return Xel, yel
 
 
-def random_decisions(N):
+def random_decisions(N, n_aug_techs=6):
     """
     Generate N random decisions for augmentation
     N should be equal to the batch size
     """
 
-    decisions = np.zeros(
-        (N, 4)
-    )  # 4 is number of aug techniques to combine (patch extraction excluded)
+    decisions = np.zeros(N)  # 4 is number of aug techniques to combine (patch extraction excluded)
     for n in range(N):
-        decisions[n] = np.random.randint(2, size=4)
+        decisions[n] = np.random.randint(n_aug_techs)
 
     return decisions
 
@@ -196,19 +194,18 @@ def combine_aug(X, y, do):
         return Xnew, ynew
 
     else:
-        for i in range(4):
-            if do[i] == 0:
-                Xnew, ynew = flip3D(Xnew, ynew)
-            elif do[i] == 1:
-                Xnew, ynew = brightness(Xnew, ynew)
-            elif do[i] == 2:
-                Xnew, ynew = rotation3D(Xnew, ynew)
-            elif do[i] == 3:
-                Xnew, ynew = elastic(Xnew, ynew)
-            elif do[i] == 4:
-                Xnew, ynew = shift3D(Xnew, ynew)
-            elif do[i] == 5:
-                Xnew, ynew = swirl3D(Xnew, ynew)
+        if do == 0:
+            Xnew, ynew = flip3D(Xnew, ynew)
+        elif do == 1:
+            Xnew, ynew = brightness(Xnew, ynew)
+        elif do == 2:
+            Xnew, ynew = rotation3D(Xnew, ynew)
+        elif do == 3:
+            Xnew, ynew = elastic(Xnew, ynew)
+        elif do == 4:
+            Xnew, ynew = shift3D(Xnew, ynew)
+        elif do == 5:
+            Xnew, ynew = swirl3D(Xnew, ynew)
 
         return Xnew, ynew
 
@@ -220,7 +217,7 @@ def aug_batch(Xb, Yb):
     batch_size = len(Xb)
     newXb, newYb = np.empty_like(Xb), np.empty_like(Yb)
 
-    decisions = random_decisions(batch_size)
+    decisions = random_decisions(batch_size, 6)
     inputs = [(X, y, do) for X, y, do in zip(Xb, Yb, decisions)]
     pool = mp.Pool(processes=8)
     multi_result = pool.starmap(combine_aug, inputs)
