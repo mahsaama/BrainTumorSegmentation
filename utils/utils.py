@@ -21,7 +21,6 @@ def show_folder_images(url):
             fig.add_subplot(1, len(files), i)
             plt.imshow(img)
             plt.title(fil.split("_")[-1].split(".")[0])
-            plt.show()
 
 
 def sec_to_minute(sec):
