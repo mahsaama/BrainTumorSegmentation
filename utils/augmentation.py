@@ -46,10 +46,8 @@ def shift3D(X, y, shift_stds=[20, 20, 20]):
     X_shft = np.empty_like(X)
     for channel in range(X.shape[-1]):
         X_shft[:, :, :, channel] = shift(X[:, :, :, channel], shifts, order=3)
-    # X_shft = np.stack(X_shft, axis=-1)
 
     y_shft = shift(y, shifts, order=0)
-    # y_shft = y_shft.reshape(y_shft.shape + (1,))
 
     return X_shft, y_shft
 
@@ -69,13 +67,11 @@ def swirl3D(X, y, radius=100, strenght_std=1):
             radius=radius,
             order=3,
         )
-    # X_swapped = np.stack(X_swapped, axis=-1)
     X_swapped = np.swapaxes(X_swapped, ax1, ax2)
 
     # y
     y_swapped = np.swapaxes(y, ax1, ax2)
     y_swapped = swirl(y_swapped, rotation=0, strength=strenght, radius=radius, order=0)
-    # y_swapped = y_swapped.reshape(y_swapped.shape + (1,))
     y_swapped = np.swapaxes(y_swapped, ax1, ax2)
 
     return X_swapped, y_swapped
@@ -195,41 +191,24 @@ def combine_aug(X, y, do):
     """
     Xnew, ynew = X, y
 
-    # make sure to use at least the 25% of original images
-    if np.random.random_sample() > 0.75:
+    # make sure to use at least the 50% of original images
+    if np.random.random_sample() > 0.5:
         return Xnew, ynew
 
     else:
-        # for i in range(4):
-        #     if do[i] == 0:
-        #         Xnew, ynew = flip3D(Xnew, ynew)
-        #     elif do[i] == 1:
-        #         Xnew, ynew = brightness(Xnew, ynew)
-        #     elif do[i] == 2:
-        #         Xnew, ynew = rotation3D(Xnew, ynew)
-        #     elif do[i] == 3:
-        #         Xnew, ynew = elastic(Xnew, ynew)
-        # if do[i] == 0:
-        #     Xnew, ynew = shift3D(Xnew, ynew)
-        # elif do[i] == 1:
-        #     Xnew, ynew = swirl3D(Xnew, ynew)
-        if do[0] == 1:
-            Xnew, ynew = flip3D(Xnew, ynew)
-
-        if do[1] == 1:
-            Xnew, ynew = brightness(Xnew, ynew)
-
-        if do[2] == 1:
-            Xnew, ynew = rotation3D(Xnew, ynew)
-
-        if do[3] == 1:
-            Xnew, ynew = elastic(Xnew, ynew)
-
-        # if do[4] == 1:
-        #     Xnew, ynew = shift3D(Xnew, ynew)
-
-        # if do[5] == 1:
-        #     Xnew, ynew = swirl3D(Xnew, ynew)
+        for i in range(4):
+            if do[i] == 0:
+                Xnew, ynew = flip3D(Xnew, ynew)
+            elif do[i] == 1:
+                Xnew, ynew = brightness(Xnew, ynew)
+            elif do[i] == 2:
+                Xnew, ynew = rotation3D(Xnew, ynew)
+            elif do[i] == 3:
+                Xnew, ynew = elastic(Xnew, ynew)
+            elif do[i] == 4:
+                Xnew, ynew = shift3D(Xnew, ynew)
+            elif do[i] == 5:
+                Xnew, ynew = swirl3D(Xnew, ynew)
 
         return Xnew, ynew
 
