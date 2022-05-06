@@ -1,5 +1,14 @@
 # BrainTumorSegmentation
 
+Dataset: [BraTS2020 dataset](https://ipp.cbica.upenn.edu/categories/brats2020)
+
+1. Training: 3D MRI images from `369` patients (Height=240, Width=240, Depth=155)
+    - Images: 4 modalities 
+    - Masks: 4 classes(0, 1, 2, and 4)
+
+2. Validation: 3D MRI images from `125` patients (Height=240, Width=240, Depth=155)
+    - Images: 4 modalities
+
 Requirements:
 - tensorflow
 - tensorflow-addons
