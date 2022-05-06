@@ -38,15 +38,15 @@ python -m scripts.main -h
 
 For running **UNet3D** model use this:
 ```bash
-python -m scripts.main -nc 4 -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m unet
+python -m scripts.main -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m unet
 ```
 
 For running **AttUnet3D** model use this:
 ```bash
-python -m scripts.main -nc 4 -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m att_unet
+python -m scripts.main -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m att_unet
 ```
 
 For running **GAN** model use this:
 ```bash
-python -m scripts.main -nc 4 -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m gan
+python -m scripts.main -bs 4 -ps 32 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -m gan
 ```
