@@ -1,6 +1,8 @@
 # BrainTumorSegmentation
 
-Dataset: [BraTS2020 dataset](https://ipp.cbica.upenn.edu/categories/brats2020)
+Dataset
+-----------------------------------
+Dataset is available in [here](https://ipp.cbica.upenn.edu/categories/brats2020).
 
 1. Training: 3D MRI images from `369` patients (Height=240, Width=240, Depth=155)
     - Images: 4 modalities 
@@ -14,8 +16,8 @@ Dataset: [BraTS2020 dataset](https://ipp.cbica.upenn.edu/categories/brats2020)
 ![validation image](images/validation_image.png)
 
 
-Preprocess and Augmentation:
-
+Preprocess and Augmentation
+---------------------------------------
 1. Flip
 ![horizontal flip](images/flip_x.png)
 ![vertical flip](images/flip_y.png)
@@ -36,7 +38,8 @@ Preprocess and Augmentation:
 ![swirl](images/swirl.png)
 
 
-Requirements:
+Requirements
+-----------------------------------
 - tensorflow
 - tensorflow-addons
 - tensorflow-cpu
@@ -48,11 +51,12 @@ Requirements:
 - nibabel
 - SimpleITK
 
-
 Install the requirements using command below:
 ```bash
 pip install -r requirements.txt 
 ```
+Run
+--------------------------------------
 
 Use the following command to see the arguments needed for running:
 ```bash
