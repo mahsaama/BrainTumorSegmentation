@@ -37,6 +37,25 @@ Preprocess and Augmentation
 6. Swirl
 ![swirl](images/swirl.png)
 
+Models
+-----------------------------------
+1. UNet3D
+![unet3d](images/unet.png)
+
+2. AttUnet3D
+![attunet3d](images/attention_unet.png)
+
+3. GAN (Vox2Vox)
+![gan generator](images/gan_generator.webp)
+![gan discriminator](images/gan_discriminator.webp)
+
+Metrics
+------------------------------------
+1. Dice Loss
+
+2. Generator Loss
+
+3. Discriminator Loss
 
 Requirements
 -----------------------------------
@@ -77,3 +96,8 @@ For running **GAN** model use this:
 ```bash
 python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m gan
 ```
+
+References
+---------------------------------------------------
+- [Vox2Vox: 3D-GAN for Brain Tumour Segmentation](https://github.com/mdciri/Vox2Vox)
+- [Attention Unet](https://github.com/sfczekalski/attention_unet)
