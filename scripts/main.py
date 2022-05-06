@@ -4,7 +4,7 @@ import glob
 import os
 from sklearn.model_selection import train_test_split
 
-from utils.utils import DataGenerator
+from utils.utils import DataGenerator, show_folder_images
 from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
@@ -13,9 +13,6 @@ from models.att_unet_model import AttUnet3D
 parser = argparse.ArgumentParser("BTS Training and validation", add_help=False)
 
 # training parameters
-parser.add_argument(
-    "-nc", "--num_classes", default=4, type=int, help="number of classes"
-)
 parser.add_argument("-bs", "--batch_size", default=4, type=int, help="batch size")
 parser.add_argument("-ps", "--patch_size", default=128, type=int, help="patch size")
 parser.add_argument("-a", "--alpha", default=5, type=int, help="alpha weight")
@@ -40,7 +37,7 @@ parser.add_argument(
 
 
 args = parser.parse_args()
-n_classes = args.num_classes
+n_classes = 4
 batch_size = args.batch_size
 patch_size = args.patch_size
 alpha = args.alpha
