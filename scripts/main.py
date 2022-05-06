@@ -2,12 +2,17 @@ import argparse
 import numpy as np
 import glob
 import os
+import random
 from sklearn.model_selection import train_test_split
 
 from utils.utils import DataGenerator, show_folder_images
 from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
+
+# define seeds to genetare predictable results
+random.seed(10)
+np.random.seed(10)
 
 
 parser = argparse.ArgumentParser("BTS Training and validation", add_help=False)
@@ -34,7 +39,12 @@ parser.add_argument(
 parser.add_argument(
     "-ds", "--data_size", default=369, type=int, help="number of data to use(<370)"
 )
-
+parser.add_argument(
+    "-np", "--num_patch", default=1, type=int, help="number of patches"
+)
+parser.add_argument(
+    "-aug", "--augmentation", default=1, type=int, help="whether augment the data or not"
+)
 
 args = parser.parse_args()
 n_classes = 4
@@ -47,17 +57,20 @@ model = args.model
 lr = args.learning_rate
 beta_1 = args.beta_1
 ds = args.data_size
+num_patches = args.num_patch
+aug = True if args.augmentation == 1 else False
 
 classes = np.arange(n_classes)
+
 # class weights
 class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f")
 
 # uncomment the code below to see the input images modalities and mask
-print("Training Images (4 modalities + 1 mask)...")
-show_folder_images("../Dataset_BRATS_2020/Training/BraTS20_Training_001/")
+# print("Training Images (4 modalities + 1 mask)...")
+# show_folder_images("../Dataset_BRATS_2020/Training/BraTS20_Training_001/")
 
-print("Validation Images (4 modalities)...")
-show_folder_images("../Dataset_BRATS_2020/Validation/BraTS20_Validation_001/")
+# print("Validation Images (4 modalities)...")
+# show_folder_images("../Dataset_BRATS_2020/Validation/BraTS20_Validation_001/")
 
 # images lists
 t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))[:ds]
@@ -87,15 +100,17 @@ train_gen = DataGenerator(
     sets["train"],
     batch_size=batch_size,
     n_classes=n_classes,
-    augmentation=True,
+    augmentation=aug,
     patch_size=patch_size,
+    n_patches=num_patches
 )
 valid_gen = DataGenerator(
     sets["valid"],
     batch_size=batch_size,
     n_classes=n_classes,
-    augmentation=True,
+    augmentation=aug,
     patch_size=patch_size,
+    n_patches=num_patches
 )
 
 results_path = os.path.join(".", "RESULTS")
