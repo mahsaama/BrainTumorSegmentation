@@ -39,11 +39,13 @@ parser.add_argument(
 parser.add_argument(
     "-ds", "--data_size", default=369, type=int, help="number of data to use(<370)"
 )
+parser.add_argument("-np", "--num_patch", default=1, type=int, help="number of patches")
 parser.add_argument(
-    "-np", "--num_patch", default=1, type=int, help="number of patches"
-)
-parser.add_argument(
-    "-aug", "--augmentation", default=1, type=int, help="whether augment the data or not"
+    "-aug",
+    "--augmentation",
+    default=1,
+    type=int,
+    help="whether augment the data or not",
 )
 
 args = parser.parse_args()
@@ -102,7 +104,7 @@ train_gen = DataGenerator(
     n_classes=n_classes,
     augmentation=aug,
     patch_size=patch_size,
-    n_patches=num_patches
+    n_patches=num_patches,
 )
 valid_gen = DataGenerator(
     sets["valid"],
@@ -110,7 +112,7 @@ valid_gen = DataGenerator(
     n_classes=n_classes,
     augmentation=aug,
     patch_size=patch_size,
-    n_patches=num_patches
+    n_patches=num_patches,
 )
 
 results_path = os.path.join(".", "RESULTS")
