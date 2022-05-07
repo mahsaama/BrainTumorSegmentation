@@ -10,7 +10,6 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
     Input,
     Conv3D,
-    Dropout,
     Concatenate,
     MaxPooling3D,
     UpSampling3D,
