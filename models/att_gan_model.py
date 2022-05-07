@@ -15,6 +15,10 @@ from tensorflow.keras.layers import (
     Dropout,
     LeakyReLU,
     ZeroPadding3D,
+    BatchNormalization,
+    Add,
+    Activation,
+    Multiply,
 )
 from tensorflow_addons.layers import InstanceNormalization
 
@@ -35,6 +39,22 @@ class AttGAN:
         Generator model
         """
 
+        def attention_block(F_g, F_l, F_int):
+            g = Conv3D(F_int, 1, padding="valid")(F_g)
+            g = BatchNormalization()(g)
+
+            x = Conv3D(F_int, 1, padding="valid")(F_l)
+            x = BatchNormalization()(x)
+
+            psi = Add()([g, x])
+            psi = Activation("relu")(psi)
+
+            psi = Conv3D(1, 1, padding="valid")(psi)
+            psi = BatchNormalization()(psi)
+            psi = Activation("sigmoid")(psi)
+
+            return Multiply()([F_l, psi])
+        
         def encoder_step(layer, Nf, ks, norm=True):
             x = Conv3D(
                 Nf,
@@ -84,36 +104,34 @@ class AttGAN:
             )(layer)
             x = InstanceNormalization()(x)
             x = LeakyReLU()(x)
-            x = Concatenate()([x, layer_to_concatenate])
+            att = self.attention_block(x, layer_to_concatenate, Nf)
+            x = Concatenate()([x, att])
             x = Dropout(0.2)(x)
             return x
 
         layers_to_concatenate = []
         inputs = Input((self.patch_size, self.patch_size, self.patch_size, self.n_classes), name="input_image")
         Nfilter_start = self.patch_size // 2
-        depth = 4
         ks = 4
-        x = inputs
 
         # encoder
-        for d in range(depth - 1):
-            if d == 0:
-                x = encoder_step(x, Nfilter_start * np.power(2, d), ks, False)
-            else:
-                x = encoder_step(x, Nfilter_start * np.power(2, d), ks)
-            layers_to_concatenate.append(x)
+        e1 = encoder_step(inputs, Nfilter_start, ks, False)
+        layers_to_concatenate.append(e1)
+        e2 = encoder_step(e1, Nfilter_start * 2, ks)
+        layers_to_concatenate.append(e2)
+        e3 = encoder_step(e2, Nfilter_start * 4, ks)
+        layers_to_concatenate.append(e3)
 
         # bottlenek
-        x = bottlenek(x, Nfilter_start * np.power(2, depth - 1), ks)
+        b = bottlenek(e3, Nfilter_start * 8, ks)
 
         # decoder
-        for d in range(depth - 2, -1, -1):
-            x = decoder_step(
-                x, layers_to_concatenate.pop(), Nfilter_start * np.power(2, d), ks
-            )
+        d1 = decoder_step(b, layers_to_concatenate.pop(), Nfilter_start * 4, ks)
+        d2 = decoder_step(d1, layers_to_concatenate.pop(), Nfilter_start * 2, ks)
+        d3 = decoder_step(d2, layers_to_concatenate.pop(), Nfilter_start, ks)
 
         # classifier
-        last = Conv3DTranspose(
+        outputs = Conv3DTranspose(
             4,
             kernel_size=ks,
             strides=2,
@@ -121,9 +139,9 @@ class AttGAN:
             kernel_initializer="he_normal",
             activation="softmax",
             name="output_generator",
-        )(x)
+        )(d3)
 
-        return Model(inputs=inputs, outputs=last, name="Generator")
+        return Model(inputs=inputs, outputs=outputs, name="Generator")
 
     def Discriminator(self):
         """
