@@ -9,6 +9,7 @@ from utils.utils import DataGenerator, show_folder_images
 from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
+from models.att_gan_model import AttGAN
 
 # define seeds to genetare predictable results
 random.seed(10)
@@ -136,4 +137,10 @@ elif model == "gan":
     # train the vox2vox model
     path = os.path.join(".", "RESULTS", model)
     gan = GAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
+    history = gan.train(train_gen, valid_gen, n_epochs)
+
+elif model == "att_gan":
+    # train the vox2vox model
+    path = os.path.join(".", "RESULTS", model)
+    gan = AttGAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
     history = gan.train(train_gen, valid_gen, n_epochs)
