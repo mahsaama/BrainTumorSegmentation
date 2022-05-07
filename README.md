@@ -49,6 +49,9 @@ Models
 ![gan generator](images/gan_generator.webp)
 ![gan discriminator](images/gan_discriminator.webp)
 
+4. AttGAN
+
+
 Metrics
 ------------------------------------
 1. Dice Loss
@@ -95,6 +98,11 @@ python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 10
 For running **GAN** model use this:
 ```bash
 python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m gan
+```
+
+For running **AttGAN** model use this:
+```bash
+python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m att_gan
 ```
 
 References
