@@ -104,7 +104,7 @@ class AttGAN:
             )(layer)
             x = InstanceNormalization()(x)
             x = LeakyReLU()(x)
-            att = self.attention_block(x, layer_to_concatenate, Nf)
+            att = attention_block(x, layer_to_concatenate, Nf)
             x = Concatenate()([x, att])
             x = Dropout(0.2)(x)
             return x
