@@ -13,6 +13,7 @@ from tensorflow.keras.layers import (
     concatenate,
     MaxPooling3D,
     UpSampling3D,
+    Activation
 )
 from utils.deformable_conv_3d import DeformConv3d
 
@@ -33,56 +34,70 @@ class UNet3D_with_DeformConv:
         )
 
         conv1 = DeformConv3d(
-            64, 3, activation="relu", padding="same", data_format="channels_last"
-        )(inputs)
-        conv1 = DeformConv3d(64, 3, activation="relu", padding="same")(conv1)
+            64, 3, activation="relu", padding="same")(inputs)
+        conv1 = Activation("relu")(conv1)
+        conv1 = DeformConv3d(64, 3, padding="same")(conv1)
+        conv1 = Activation("relu")(conv1)
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
-        conv2 = DeformConv3d(128, 3, activation="relu", padding="same")(pool1)
-        conv2 = DeformConv3d(128, 3, activation="relu", padding="same")(conv2)
+        conv2 = DeformConv3d(128, 3, padding="same")(pool1)
+        conv2 = Activation("relu")(conv2)
+        conv2 = DeformConv3d(128, 3, padding="same")(conv2)
+        conv2 = Activation("relu")(conv2)
         pool2 = MaxPooling3D(pool_size=(2, 2, 2))(conv2)
 
-        conv3 = DeformConv3d(256, 3, activation="relu", padding="same")(pool2)
-        conv3 = DeformConv3d(256, 3, activation="relu", padding="same")(conv3)
+        conv3 = DeformConv3d(256, 3, padding="same")(pool2)
+        conv3 = Activation("relu")(conv3)
+        conv3 = DeformConv3d(256, 3, padding="same")(conv3)
+        conv3 = Activation("relu")(conv3)
         pool3 = MaxPooling3D(pool_size=(2, 2, 2))(conv3)
 
-        conv4 = DeformConv3d(512, 3, activation="relu", padding="same")(pool3)
-        conv4 = DeformConv3d(512, 3, activation="relu", padding="same")(conv4)
+        conv4 = DeformConv3d(512, 3, padding="same")(pool3)
+        conv4 = Activation("relu")(conv4)
+        conv4 = DeformConv3d(512, 3, padding="same")(conv4)
+        conv4 = Activation("relu")(conv4)
         drop4 = Dropout(0.5)(conv4)
         pool4 = MaxPooling3D(pool_size=(2, 2, 2))(drop4)
 
-        conv5 = DeformConv3d(1024, 3, activation="relu", padding="same")(pool4)
-        conv5 = DeformConv3d(1024, 3, activation="relu", padding="same")(conv5)
+        conv5 = DeformConv3d(1024, 3, padding="same")(pool4)
+        conv5 = Activation("relu")(conv5)
+        conv5 = DeformConv3d(1024, 3, padding="same")(conv5)
+        conv5 = Activation("relu")(conv5)
         drop5 = Dropout(0.5)(conv5)
 
-        up6 = DeformConv3d(512, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(drop5)
-        )
+        up6 = DeformConv3d(512, 2, padding="same")(UpSampling3D(size=(2, 2, 2))(drop5))
+        up6 = Activation("relu")(up6)
         merge6 = concatenate([drop4, up6], axis=-1)
-        conv6 = DeformConv3d(512, 3, activation="relu", padding="same")(merge6)
-        conv6 = DeformConv3d(512, 3, activation="relu", padding="same")(conv6)
+        conv6 = DeformConv3d(512, 3, padding="same")(merge6)
+        conv6 = Activation("relu")(conv6)
+        conv6 = DeformConv3d(512, 3, padding="same")(conv6)
+        conv6 = Activation("relu")(conv6)
 
-        up7 = DeformConv3d(256, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(conv6)
-        )
+        up7 = DeformConv3d(256, 2, padding="same")(UpSampling3D(size=(2, 2, 2))(conv6))
+        up7 = Activation("relu")(up7)
         merge7 = concatenate([conv3, up7], axis=-1)
-        conv7 = DeformConv3d(256, 3, activation="relu", padding="same")(merge7)
-        conv7 = DeformConv3d(256, 3, activation="relu", padding="same")(conv7)
+        conv7 = DeformConv3d(256, 3, padding="same")(merge7)
+        conv7 = Activation("relu")(conv7)
+        conv7 = DeformConv3d(256, 3, padding="same")(conv7)
+        conv7 = Activation("relu")(conv7)
 
-        up8 = DeformConv3d(128, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(conv7)
-        )
+        up8 = DeformConv3d(128, 2, padding="same")(UpSampling3D(size=(2, 2, 2))(conv7))
+        up8 = Activation("relu")(up8)
         merge8 = concatenate([conv2, up8], axis=-1)
-        conv8 = DeformConv3d(128, 3, activation="relu", padding="same")(merge8)
-        conv8 = DeformConv3d(128, 3, activation="relu", padding="same")(conv8)
+        conv8 = DeformConv3d(128, 3, padding="same")(merge8)
+        conv8 = Activation("relu")(conv8)
+        conv8 = DeformConv3d(128, 3, padding="same")(conv8)
+        conv8 = Activation("relu")(conv8)
 
-        up9 = DeformConv3d(64, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(conv8)
-        )
+        up9 = DeformConv3d(64, 2, padding="same")(UpSampling3D(size=(2, 2, 2))(conv8))
+        up9 = Activation("relu")(up9)
         merge9 = concatenate([conv1, up9], axis=-1)
-        conv9 = DeformConv3d(64, 3, activation="relu", padding="same")(merge9)
-        conv9 = DeformConv3d(64, 3, activation="relu", padding="same")(conv9)
-        output = DeformConv3d(4, 1, activation="softmax")(conv9)
+        conv9 = DeformConv3d(64, 3, padding="same")(merge9)
+        conv9 = Activation("relu")(conv9)
+        conv9 = DeformConv3d(64, 3, padding="same")(conv9)
+        conv9 = Activation("relu")(conv9)
+        conv9 = DeformConv3d(4, 1)(conv9)
+        output = Activation("softmax")(conv9)
 
         return Model(inputs=inputs, outputs=output, name="Unet")
 
