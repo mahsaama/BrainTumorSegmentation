@@ -53,6 +53,8 @@ Models
 
 4. AttGAN
 
+5. UNet3D with Deformable Convolution
+
 
 Metrics
 ------------------------------------
@@ -105,6 +107,11 @@ python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 10
 For running **AttGAN** model use this:
 ```bash
 python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m att_gan
+```
+
+For running **UNet3D_with_DeformConv** model use this:
+```bash
+python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m unet_dc
 ```
 
 References
