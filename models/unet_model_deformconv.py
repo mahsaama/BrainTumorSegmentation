@@ -13,7 +13,7 @@ from tensorflow.keras.layers import (
     concatenate,
     MaxPooling3D,
     UpSampling3D,
-    Activation
+    Activation,
 )
 from utils.deformable_conv_3d import DeformConv3d
 
@@ -33,8 +33,7 @@ class UNet3D_with_DeformConv:
             name="input_image",
         )
 
-        conv1 = DeformConv3d(
-            64, 3, activation="relu", padding="same")(inputs)
+        conv1 = DeformConv3d(64, 3, padding="same")(inputs)
         conv1 = Activation("relu")(conv1)
         conv1 = DeformConv3d(64, 3, padding="same")(conv1)
         conv1 = Activation("relu")(conv1)
