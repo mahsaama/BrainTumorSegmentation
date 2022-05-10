@@ -10,6 +10,7 @@ from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
 from models.att_gan_model import AttGAN
+from models.unet_model_deformconv import UNet3D_with_DeformConv
 
 # define seeds to genetare predictable results
 random.seed(10)
@@ -140,7 +141,13 @@ elif model == "gan":
     history = gan.train(train_gen, valid_gen, n_epochs)
 
 elif model == "att_gan":
-    # train the vox2vox model
+    # train the vox2vox model with attention in generator
     path = os.path.join(".", "RESULTS", model)
     gan = AttGAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
     history = gan.train(train_gen, valid_gen, n_epochs)
+    
+if model == "unet_dc":
+    # train the unet model with deformable convolution
+    path = os.path.join(".", "RESULTS", model)
+    unet_dc = UNet3D_with_DeformConv(patch_size, n_classes, class_weights, path, lr, beta_1)
+    history = unet_dc.train(train_gen, valid_gen, n_epochs)
