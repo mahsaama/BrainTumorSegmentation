@@ -47,7 +47,7 @@ class DCN3D(Conv3D):
         print(x.get_shape())
         offsets = super(DCN3D, self).call(x)
         print(offsets.get_shape())
-        offsets = BatchNormalization()(offsets, training=False)
+        offsets = tf.compact.v1.layers.batch_normalization(offsets, trainable=False)
         offsets = tf.nn.tanh(offsets)
         print(offsets.get_shape())
         # generate deformed feature
