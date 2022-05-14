@@ -16,7 +16,7 @@ from tensorflow.keras.layers import (
     Activation,
     Conv3D,
 )
-from utils.deformable_conv_3d import ConvOffset3D
+from utils.deformable_conv_3d import DCN3D
 
 
 class UNet3D_DCN:
@@ -47,9 +47,7 @@ class UNet3D_DCN:
         conv1 = Conv3D(
             64, 3, activation="relu", padding="same", data_format="channels_last"
         )(inputs)
-        conv1 = Conv3D(64, 3, activation="relu", padding="same")(
-            ConvOffset3D(64)(conv1)
-        )
+        conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(conv1)
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
         conv2 = Conv3D(128, 3, activation="relu", padding="same")(
