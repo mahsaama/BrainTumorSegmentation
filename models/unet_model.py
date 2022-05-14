@@ -124,7 +124,6 @@ class UNet3D:
             b = 0
             for Xb, yb in train_gen:
                 b += 1
-                print("********************", Xb.shape, yb.shape, "********************")
                 losses = self.train_step(Xb, yb)
                 epoch_dice_loss.update_state(losses[0])
                 epoch_dice_loss_percent.update_state(losses[1])
