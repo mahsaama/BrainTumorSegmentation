@@ -104,7 +104,6 @@ class UNet3D_DCN:
         gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
-        print("hereeeeee")
         return dice_loss, dice_percent
 
     @tf.function
@@ -135,6 +134,7 @@ class UNet3D_DCN:
             for Xb, yb in train_gen:
                 b += 1
                 losses = self.train_step(Xb, yb)
+                print(losses)
                 epoch_dice_loss.update_state(losses[0])
                 epoch_dice_loss_percent.update_state(losses[1])
 
