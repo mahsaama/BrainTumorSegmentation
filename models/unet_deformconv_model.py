@@ -43,10 +43,8 @@ class UNet3D_DCN:
             (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
             name="input_image",
         )
-
-        conv1 = Conv3D(
-            64, 3, activation="relu", padding="same", data_format="channels_last"
-        )(inputs)
+        print(self.batch_size, "--------------------")
+        conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(inputs)
         conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(conv1)
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
@@ -134,7 +132,6 @@ class UNet3D_DCN:
             for Xb, yb in train_gen:
                 b += 1
                 losses = self.train_step(Xb, yb)
-                print(losses)
                 epoch_dice_loss.update_state(losses[0])
                 epoch_dice_loss_percent.update_state(losses[1])
 
