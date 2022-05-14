@@ -453,7 +453,7 @@ class DCNN3D(Conv3D):
 
         # generate deformed feature
         input_shape = [
-            x.shape[0].value,
+            self.nb_batch,
             x.shape[1].value,
             x.shape[2].value,
             x.shape[3].value,
