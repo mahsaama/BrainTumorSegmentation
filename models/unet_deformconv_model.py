@@ -16,10 +16,10 @@ from tensorflow.keras.layers import (
     Activation,
     Conv3D,
 )
-from utils.deformable_conv_3d import DCNN3D
+from utils.deformable_conv_3d import ConvOffset3D
 
 
-class UNet3D_with_DeformConv:
+class UNet3D_DCN:
     def __init__(
         self,
         batch_size,
@@ -44,80 +44,93 @@ class UNet3D_with_DeformConv:
             name="input_image",
         )
 
-        conv1 = DCNN3D(self.batch_size, 64, 3, scope="dc1")(inputs)
-        conv1 = Activation("relu")(conv1)
-        conv1 = DCNN3D(self.batch_size, 64, 3, scope="dc2")(conv1)
-        conv1 = Activation("relu")(conv1)
+        conv1 = Conv3D(
+            64, 3, activation="relu", padding="same", data_format="channels_last"
+        )(inputs)
+        conv1 = Conv3D(64, 3, activation="relu", padding="same")(
+            ConvOffset3D(64)(conv1)
+        )
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
-        conv2 = DCNN3D(self.batch_size, 128, 3, scope="dc3")(pool1)
-        conv2 = Activation("relu")(conv2)
-        conv2 = DCNN3D(self.batch_size, 128, 3, scope="dc4")(conv2)
-        conv2 = Activation("relu")(conv2)
+        conv2 = Conv3D(128, 3, activation="relu", padding="same")(
+            ConvOffset3D(128)(pool1)
+        )
+        conv2 = Conv3D(128, 3, activation="relu", padding="same")(
+            ConvOffset3D(128)(conv2)
+        )
         pool2 = MaxPooling3D(pool_size=(2, 2, 2))(conv2)
 
-        conv3 = DCNN3D(self.batch_size, 256, 3, scope="dc5")(pool2)
-        conv3 = Activation("relu")(conv3)
-        conv3 = DCNN3D(self.batch_size, 256, 3, scope="dc6")(conv3)
-        conv3 = Activation("relu")(conv3)
+        conv3 = Conv3D(256, 3, activation="relu", padding="same")(
+            ConvOffset3D(256)(pool2)
+        )
+        conv3 = Conv3D(256, 3, activation="relu", padding="same")(
+            ConvOffset3D(256)(conv3)
+        )
         pool3 = MaxPooling3D(pool_size=(2, 2, 2))(conv3)
 
-        conv4 = DCNN3D(self.batch_size, 512, 3, scope="dc7")(pool3)
-        conv4 = Activation("relu")(conv4)
-        conv4 = DCNN3D(self.batch_size, 512, 3, scope="dc8")(conv4)
-        conv4 = Activation("relu")(conv4)
+        conv4 = Conv3D(512, 3, activation="relu", padding="same")(
+            ConvOffset3D(512)(pool3)
+        )
+        conv4 = Conv3D(512, 3, activation="relu", padding="same")(
+            ConvOffset3D(512)(conv4)
+        )
         drop4 = Dropout(0.5)(conv4)
         pool4 = MaxPooling3D(pool_size=(2, 2, 2))(drop4)
 
-        conv5 = DCNN3D(self.batch_size, 1024, 3, scope="dc9")(pool4)
-        conv5 = Activation("relu")(conv5)
-        conv5 = DCNN3D(self.batch_size, 1024, 3, scope="dc10")(conv5)
-        conv5 = Activation("relu")(conv5)
+        conv5 = Conv3D(1024, 3, activation="relu", padding="same")(
+            ConvOffset3D(1024)(pool4)
+        )
+        conv5 = Conv3D(1024, 3, activation="relu", padding="same")(
+            ConvOffset3D(1024)(conv5)
+        )
         drop5 = Dropout(0.5)(conv5)
 
-        up6 = DCNN3D(self.batch_size, 512, 2, scope="dc11")(
-            UpSampling3D(size=(2, 2, 2))(drop5)
+        up6 = Conv3D(512, 2, activation="relu", padding="same")(
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(512)(drop5))
         )
-        up6 = Activation("relu")(up6)
         merge6 = concatenate([drop4, up6], axis=-1)
-        conv6 = DCNN3D(self.batch_size, 512, 3, scope="dc12")(merge6)
-        conv6 = Activation("relu")(conv6)
-        conv6 = DCNN3D(self.batch_size, 512, 3, scope="dc13")(conv6)
-        conv6 = Activation("relu")(conv6)
-
-        up7 = DCNN3D(self.batch_size, 256, 2, scope="dc14")(
-            UpSampling3D(size=(2, 2, 2))(conv6)
+        conv6 = Conv3D(512, 3, activation="relu", padding="same")(
+            ConvOffset3D(512)(merge6)
         )
-        up7 = Activation("relu")(up7)
+        conv6 = Conv3D(512, 3, activation="relu", padding="same")(
+            ConvOffset3D(512)(conv6)
+        )
+
+        up7 = Conv3D(256, 2, activation="relu", padding="same")(
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(256)(conv6))
+        )
         merge7 = concatenate([conv3, up7], axis=-1)
-        conv7 = DCNN3D(self.batch_size, 256, 3, scope="dc15")(merge7)
-        conv7 = Activation("relu")(conv7)
-        conv7 = DCNN3D(self.batch_size, 256, 3, scope="dc16")(conv7)
-        conv7 = Activation("relu")(conv7)
-
-        up8 = DCNN3D(self.batch_size, 128, 2, scope="dc17")(
-            UpSampling3D(size=(2, 2, 2))(conv7)
+        conv7 = Conv3D(256, 3, activation="relu", padding="same")(
+            ConvOffset3D(256)(merge7)
         )
-        up8 = Activation("relu")(up8)
+        conv7 = Conv3D(256, 3, activation="relu", padding="same")(
+            ConvOffset3D(256)(conv7)
+        )
+
+        up8 = Conv3D(128, 2, activation="relu", padding="same")(
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(128)(conv7))
+        )
         merge8 = concatenate([conv2, up8], axis=-1)
-        conv8 = DCNN3D(self.batch_size, 128, 3, scope="dc18")(merge8)
-        conv8 = Activation("relu")(conv8)
-        conv8 = DCNN3D(self.batch_size, 128, 3, scope="dc19")(conv8)
-        conv8 = Activation("relu")(conv8)
-
-        up9 = DCNN3D(self.batch_size, 64, 2, scope="dc20")(
-            UpSampling3D(size=(2, 2, 2))(conv8)
+        conv8 = Conv3D(128, 3, activation="relu", padding="same")(
+            ConvOffset3D(128)(merge8)
         )
-        up9 = Activation("relu")(up9)
-        merge9 = concatenate([conv1, up9], axis=-1)
-        conv9 = DCNN3D(self.batch_size, 64, 3, scope="dc21")(merge9)
-        conv9 = Activation("relu")(conv9)
-        conv9 = DCNN3D(self.batch_size, 64, 3, scope="dc22")(conv9)
-        conv9 = Activation("relu")(conv9)
-        conv9 = DCNN3D(self.batch_size, 4, 1)(conv9)
-        output = Activation("softmax")(conv9)
+        conv8 = Conv3D(128, 3, activation="relu", padding="same")(
+            ConvOffset3D(128)(conv8)
+        )
 
-        return Model(inputs=inputs, outputs=output, name="Unet")
+        up9 = Conv3D(64, 2, activation="relu", padding="same")(
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(64)(conv8))
+        )
+        merge9 = concatenate([conv1, up9], axis=-1)
+        conv9 = Conv3D(64, 3, activation="relu", padding="same")(
+            ConvOffset3D(64)(merge9)
+        )
+        conv9 = Conv3D(64, 3, activation="relu", padding="same")(
+            ConvOffset3D(64)(conv9)
+        )
+        output = Conv3D(4, 1, activation="softmax")(conv9)
+
+        return Model(inputs=inputs, outputs=output, name="UnetDCN")
 
     @tf.function
     def train_step(self, image, target):
