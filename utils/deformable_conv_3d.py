@@ -116,9 +116,9 @@ class DCN(object):
             3,
             4,
         )
-        # x_offset = tf.squeeze(x_offset)  # [N,H,W,D,3*3*3]
-        # y_offset = tf.squeeze(y_offset)
-        # z_offset = tf.squeeze(z_offset)
+        x_offset = tf.squeeze(x_offset, [1, 2, 3, 4, 5])  # [N,H,W,D,3*3*3]
+        y_offset = tf.squeeze(y_offset, [1, 2, 3, 4, 5])
+        z_offset = tf.squeeze(z_offset, [1, 2, 3, 4, 5])
 
         # center coordinate
         # x_center = tf.reshape(tf.tile(tf.range(self.width),[self.height]),[self.height*self.width,-1])
