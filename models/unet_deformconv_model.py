@@ -43,7 +43,6 @@ class UNet3D_DCN:
             (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
             name="input_image",
         )
-        print(self.batch_size, "--------------------")
         conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(inputs)
         conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(conv1)
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
@@ -73,19 +72,22 @@ class UNet3D_DCN:
         conv6 = DCN3D(512, 3, self.batch_size, activation="relu")(conv6)
 
         up7 = DCN3D(256, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv6))
+            UpSampling3D(size=(2, 2, 2))(conv6)
+        )
         merge7 = concatenate([conv3, up7], axis=-1)
         conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(merge7)
         conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(conv7)
 
         up8 = DCN3D(128, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv7))
+            UpSampling3D(size=(2, 2, 2))(conv7)
+        )
         merge8 = concatenate([conv2, up8], axis=-1)
         conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(merge8)
         conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(conv8)
 
         up9 = DCN3D(64, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv8))
+            UpSampling3D(size=(2, 2, 2))(conv8)
+        )
         merge9 = concatenate([conv1, up9], axis=-1)
         conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(merge9)
         conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(conv9)
@@ -131,6 +133,7 @@ class UNet3D_DCN:
             b = 0
             for Xb, yb in train_gen:
                 b += 1
+                print(Xb.shape)
                 losses = self.train_step(Xb, yb)
                 epoch_dice_loss.update_state(losses[0])
                 epoch_dice_loss_percent.update_state(losses[1])
