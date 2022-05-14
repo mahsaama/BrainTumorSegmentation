@@ -111,10 +111,11 @@ python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 10
 
 For running **UNet3D_DCN** model use this:
 ```bash
-python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m unet_dc
+python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 1 -aug 1 -m unet_dc
 ```
 
 References
 ---------------------------------------------------
 - [Vox2Vox: 3D-GAN for Brain Tumour Segmentation](https://github.com/mdciri/Vox2Vox)
 - [Attention Unet](https://github.com/sfczekalski/attention_unet)
+- [Deformable Convolution](https://github.com/XiangLi-Shaun/deformableConvolution_3D)
