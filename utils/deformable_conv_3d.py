@@ -14,7 +14,7 @@ class DCN3D(Conv3D):
         """Init"""
 
         self.num_outputs = num_outputs
-        self.kernel_size = kernel_size
+        self.kernel_size = [kernel_size] * 3
         self.nb_batch = nb_batch
         self.activation = activation
         super(DCN3D, self).__init__(
