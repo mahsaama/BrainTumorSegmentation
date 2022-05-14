@@ -112,9 +112,9 @@ class DCN(object):
                     3,
                     self.num_points,
                 ],
-                3,
-                4,
-            )
+            ),
+            3,
+            4,
         )
         x_offset = tf.squeeze(x_offset)  # [N,H,W,D,3*3*3]
         y_offset = tf.squeeze(y_offset)
