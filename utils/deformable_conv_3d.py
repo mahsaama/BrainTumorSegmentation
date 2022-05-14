@@ -24,9 +24,9 @@ class ConvOffset3D(Conv3D):
     def call(self, x):
         # TODO offsets probably have no nonlinearity?
         offsets = super(ConvOffset3D, self).call(x)
-
-        offsets = BatchNormalization()(offsets, training=False)
-        offsets = tf.nn.tanh(offsets)
+        print(offsets.get_shape())
+        # offsets = BatchNormalization()(offsets, training=False)
+        # offsets = tf.nn.tanh(offsets)
 
         # generate deformed feature
         input_shape = [
@@ -81,7 +81,7 @@ class DCN(object):
                     self.height,
                     self.width,
                     self.depth,
-                    4,
+                    self.num_channels,
                     self.num_points,
                 ],
             ),
@@ -171,21 +171,21 @@ class DCN(object):
         y_grid = tf.tile(tf.expand_dims(y_grid, 0), [self.num_batch, 1, 1, 1, 1])
         z_grid = tf.tile(
             tf.expand_dims(z_grid, 0), [self.num_batch, 1, 1, 1, 1]
-        )  # [N,H,W,D,3*3*3]
+        )  # [N,H,W,D,4*4*4]
 
         # calculate X,Y,Z
         x = tf.add_n([x_center, x_grid, tf.multiply(self.extend_scope, x_offset)])
         y = tf.add_n([y_center, y_grid, tf.multiply(self.extend_scope, y_offset)])
         z = tf.add_n(
             [z_center, z_grid, tf.multiply(self.extend_scope, z_offset)]
-        )  # [N,H,W,D,3*3*3]
+        )  # [N,H,W,D,4*4*4]
 
         # uncomment this to be normal CNN layer
         # x = tf.add_n([x_center, x_grid, tf.multiply(0.0, x_offset)])
         # y = tf.add_n([y_center, y_grid, tf.multiply(0.0, y_offset)])
         # z = tf.add_n([z_center, z_grid, tf.multiply(0.0, z_offset)]) #[N,H,W,D,4*4*4]
 
-        # reshape N*H*W*D*num_points to N*3H*3W*3D
+        # reshape N*H*W*D*num_points to N*4H*4W*4D
         x_new = tf.reshape(
             x,
             [
