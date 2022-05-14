@@ -1,7 +1,7 @@
 import tensorflow as tf
 import keras
 from keras.layers import Conv3D
-
+from tensorflow.keras.layers import BatchNormalization
 
 class DCN(object):
 
@@ -448,7 +448,7 @@ class DCNN3D(Conv3D):
     def call(self, x):
         """Return the deformed featured map"""
         offset = super(DCNN3D, self).call(x)
-        offset = tf.layers.batch_normalization(offset, trainable=False)
+        offset = BatchNormalization()(offset, training=False)
         offset = tf.nn.tanh(offset)
 
         # generate deformed feature
@@ -479,7 +479,7 @@ class DCNN3D(Conv3D):
         )
 
         if self.norm:
-            outputs = tf.layers.batch_normalization(outputs)
+            outputs = BatchNormalization()(outputs)
             outputs = tf.nn.relu(outputs, name=self.scope + "/relu")
         else:
             outputs = tf.nn.relu(outputs, name=self.scope + "/relu")
