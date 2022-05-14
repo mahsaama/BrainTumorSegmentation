@@ -202,11 +202,11 @@ class DCN(object):
         )  # [N,H,W,D,3*3*3]
 
         # calculate X,Y,Z
+        print(self.extend_scope)
+        print(x_offset.get_shape())
+        print(tf.multiply(self.extend_scope, x_offset).get_shape())
         x = tf.add_n([x_center, x_grid, tf.multiply(self.extend_scope, x_offset)])
         y = tf.add_n([y_center, y_grid, tf.multiply(self.extend_scope, y_offset)])
-        print(self.extend_scope)
-        print(z_offset.get_shape())
-        print(tf.multiply(self.extend_scope, z_offset).get_shape())
         z = tf.add_n(
             [z_center, z_grid, tf.multiply(self.extend_scope, z_offset)]
         )  # [N,H,W,D,3*3*3]
