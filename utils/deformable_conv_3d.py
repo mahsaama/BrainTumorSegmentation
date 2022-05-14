@@ -76,6 +76,7 @@ class DCN3D(Conv3D):
         )
         
         outputs = Activation(self.activation)(outputs)
+        print(outputs.get_shape(), self.num_outputs)
         return outputs
 
 
