@@ -454,10 +454,10 @@ class DCNN3D(Conv3D):
         # generate deformed feature
         input_shape = [
             self.nb_batch,
-            x.shape[1].value,
-            x.shape[2].value,
-            x.shape[3].value,
-            x.shape[4].value,
+            x.shape[1],
+            x.shape[2],
+            x.shape[3],
+            x.shape[4],
         ]
         dcn = DCN(input_shape, self.kernel_size1)
         deformed_feature = dcn.deform_conv(x, offset, self.scope)
