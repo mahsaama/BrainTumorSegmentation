@@ -10,7 +10,7 @@ from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
 from models.att_gan_model import AttGAN
-from models.unet_model_deformconv import UNet3D_with_DeformConv
+from models.unet_deformconv_model import UNet3D_with_DeformConv
 
 # define seeds to genetare predictable results
 random.seed(10)
@@ -149,5 +149,5 @@ elif model == "att_gan":
 if model == "unet_dc":
     # train the unet model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
-    unet_dc = UNet3D_with_DeformConv(patch_size, n_classes, class_weights, path, lr, beta_1)
+    unet_dc = UNet3D_with_DeformConv(batch_size, patch_size, n_classes, class_weights, path, lr, beta_1)
     history = unet_dc.train(train_gen, valid_gen, n_epochs)

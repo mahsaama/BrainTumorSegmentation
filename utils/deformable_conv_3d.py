@@ -1,267 +1,312 @@
-from torch.autograd import Variable
-import torch
-from torch import nn
-import numpy as np
 
+import tensorflow as tf
+import keras
+from keras.layers import Conv3D
 
-class DeformConv3d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1, bias=False):
-        super(DeformConv3d, self).__init__()
+class DCN(object):
+    
+    """
+    Init func
+    Only two params：
+    input_shape：input feature map shape, a 1*5 list [N,H,W,D,C]
+    kernel_size：a 1*3 list
+    """
+    def __init__(self, input_shape, kernel_size):
+        
+        # 定义deform_conv的kernel size
         self.kernel_size = kernel_size
-        N = kernel_size ** 3
-        self.stride = stride
-        self.padding = padding
-        self.zero_padding = nn.ConstantPad3d(padding, 0)
-        self.conv_kernel = nn.Conv3d(in_channels * N, out_channels, kernel_size=1, bias=bias)
-        self.offset_conv_kernel = nn.Conv3d(in_channels, N * 3, kernel_size=kernel_size, padding=padding, bias=bias)
+        # self.num_points = kernel_size[0]*kernel_size[1]
+        self.num_points = kernel_size[0]*kernel_size[1]*kernel_size[2]
         
-        self.mode = "deformable"
+        # define feature map shape
+        self.num_batch = input_shape[0]
+        self.height = input_shape[1]
+        self.width = input_shape[2]
+        self.depth = input_shape[3] #for 3D
+        # self.num_channels = input_shape[3]
+        self.num_channels = input_shape[4]
         
-    def deformable_mode(self, on=True): # 
-        if on:
-            self.mode = "deformable"
+        self.extend_scope = 3.0
+    
+    
+    """
+    _coordinate_map(self, offset_field) will generate [3W,3H,3D] coordinate map
+    input：offset field: [N,H,W,D,3*3*3*3]
+    output：[N,3W,3H,3D] coordinate map
+    """
+    def _coordinate_map_3D(self, offset_field, name):
+        with tf.variable_scope(name+"/_coordinate_map"):
+            
+            # offset
+            # x_offset, y_offset = tf.split(tf.reshape(offset_field, [self.num_batch, self.height, self.width, 2, self.num_points]),2,3)
+            x_offset, y_offset, z_offset = tf.split(tf.reshape(offset_field, [self.num_batch, self.height, self.width, self.depth, 3, self.num_points]),3,4)
+            x_offset = tf.squeeze(x_offset) #[N,H,W,D,3*3*3]
+            y_offset = tf.squeeze(y_offset)
+            z_offset = tf.squeeze(z_offset)
+
+            # center coordinate
+            # x_center = tf.reshape(tf.tile(tf.range(self.width),[self.height]),[self.height*self.width,-1])
+            x_center = tf.tile(tf.range(self.width),[self.height*self.depth])
+            x_center = tf.transpose(tf.reshape(x_center, [self.height,self.depth,self.width]),[0,2,1])
+            x_center = tf.reshape(x_center,[self.height*self.width*self.depth,-1])
+            x_center = tf.tile(x_center,[1,self.num_points])
+            x_center = tf.reshape(x_center,[self.height,self.width,self.depth,self.num_points])
+            x_center = tf.tile(tf.expand_dims(x_center, 0), [self.num_batch,1,1,1,1])
+
+            # y_center = tf.tile(tf.range(self.height),[self.width])
+            y_center = tf.tile(tf.range(self.height),[self.width*self.depth])
+            y_center = tf.transpose(tf.reshape(y_center, [self.width,self.depth,self.height]),[2,0,1])
+            y_center = tf.reshape(y_center,[self.height*self.width*self.depth,-1])
+            y_center = tf.tile(y_center,[1,self.num_points])
+            y_center = tf.reshape(y_center,[self.height,self.width,self.depth,self.num_points])
+            y_center = tf.tile(tf.expand_dims(y_center, 0), [self.num_batch,1,1,1,1])
+
+            # z_center
+            z_center = tf.tile(tf.range(self.depth),[self.height*self.width])
+            z_center = tf.transpose(tf.reshape(z_center, [self.height,self.width,self.depth]),[0,1,2]) #actually no transpose
+            z_center = tf.reshape(z_center,[self.height*self.width*self.depth,-1])
+            z_center = tf.tile(z_center,[1,self.num_points])
+            z_center = tf.reshape(z_center,[self.height,self.width,self.depth,self.num_points])
+            z_center = tf.tile(tf.expand_dims(z_center, 0), [self.num_batch,1,1,1,1])
+        
+            x_center = tf.cast(x_center,"float32")
+            y_center = tf.cast(y_center,"float32")
+            z_center = tf.cast(z_center,"float32") #[N,H,W,D,3*3*3]
+
+            # regular grid
+            x = tf.linspace(float(-(self.kernel_size[0]-1)/2), float((self.kernel_size[0]-1)/2), self.kernel_size[0])
+            y = tf.linspace(float(-(self.kernel_size[1]-1)/2), float((self.kernel_size[1]-1)/2), self.kernel_size[1])
+            z = tf.linspace(float(-(self.kernel_size[2]-1)/2), float((self.kernel_size[2]-1)/2), self.kernel_size[2])
+            
+            x,y,z = tf.meshgrid(x,y,z)
+            x_spread = tf.transpose(tf.reshape(x,(-1,1)))
+            y_spread = tf.transpose(tf.reshape(y,(-1,1)))
+            z_spread = tf.transpose(tf.reshape(z,(-1,1)))
+
+            x_grid = tf.tile(x_spread,[1,self.height*self.width*self.depth])
+            x_grid = tf.reshape(x_grid, [self.height, self.width, self.depth, self.num_points])
+            y_grid = tf.tile(y_spread,[1,self.height*self.width*self.depth])
+            y_grid = tf.reshape(y_grid, [self.height, self.width, self.depth, self.num_points])
+            z_grid = tf.tile(z_spread,[1,self.height*self.width*self.depth])
+            z_grid = tf.reshape(z_grid, [self.height, self.width, self.depth, self.num_points])
+            x_grid = tf.tile(tf.expand_dims(x_grid, 0), [self.num_batch,1,1,1,1])
+            y_grid = tf.tile(tf.expand_dims(y_grid, 0), [self.num_batch,1,1,1,1])
+            z_grid = tf.tile(tf.expand_dims(z_grid, 0), [self.num_batch,1,1,1,1]) #[N,H,W,D,3*3*3]
+
+
+            # calculate X,Y,Z
+            x = tf.add_n([x_center, x_grid, tf.multiply(self.extend_scope, x_offset)])
+            y = tf.add_n([y_center, y_grid, tf.multiply(self.extend_scope, y_offset)])
+            z = tf.add_n([z_center, z_grid, tf.multiply(self.extend_scope, z_offset)]) #[N,H,W,D,3*3*3]
+
+            # uncomment this to be normal CNN layer
+            # x = tf.add_n([x_center, x_grid, tf.multiply(0.0, x_offset)])
+            # y = tf.add_n([y_center, y_grid, tf.multiply(0.0, y_offset)])
+            # z = tf.add_n([z_center, z_grid, tf.multiply(0.0, z_offset)]) #[N,H,W,D,3*3*3]
+
+            # reshape N*H*W*D*num_points to N*3H*3W*3D
+            x_new = tf.reshape(x,[self.num_batch,self.height,self.width,self.depth,self.kernel_size[0],self.kernel_size[1],self.kernel_size[2]])
+            x_new = tf.reshape(tf.transpose(x_new,[0,1,4,2,5,3,6]),[self.num_batch,self.kernel_size[0]*self.height,self.kernel_size[1]*self.width,self.kernel_size[2]*self.depth])
+
+            
+            y_new = tf.reshape(y,[self.num_batch,self.height,self.width,self.depth,self.kernel_size[0],self.kernel_size[1],self.kernel_size[2]])
+            y_new = tf.reshape(tf.transpose(y_new,[0,1,4,2,5,3,6]),[self.num_batch,self.kernel_size[0]*self.height,self.kernel_size[1]*self.width,self.kernel_size[2]*self.depth])
+
+
+            z_new = tf.reshape(z,[self.num_batch,self.height,self.width,self.depth,self.kernel_size[0],self.kernel_size[1],self.kernel_size[2]])
+            z_new = tf.reshape(tf.transpose(z_new,[0,1,4,2,5,3,6]),[self.num_batch,self.kernel_size[0]*self.height,self.kernel_size[1]*self.width,self.kernel_size[2]*self.depth])
+
+            return x_new, y_new, z_new
+    
+    """
+    _bilinear_interpolate(self, input_feature, coordinate_map) will bilinearly interpolate
+    input：input feature map [N,W,H,D,C]；coordinate map [N,3W,3H,3D]
+    output：[3W,3H,C1] deformed feature map
+    """
+    def _bilinear_interpolate_3D(self, input_feature, x, y, z, name):
+        with tf.variable_scope(name+"/_bilinear_interpolate"):
+        
+            # flatten to 1D
+            x = tf.reshape(x, [-1])
+            y = tf.reshape(y, [-1])
+            z = tf.reshape(z, [-1]) #[N*3W*3H*3D]
+
+
+            # data type convertion
+            x = tf.cast(x, "float32")
+            y = tf.cast(y, "float32")
+            z = tf.cast(z, "float32")
+            zero = tf.zeros([], dtype="int32")
+            max_x = tf.cast(self.width-1, "int32")
+            max_y = tf.cast(self.height-1, "int32")
+            max_z = tf.cast(self.depth-1, "int32")
+
+
+            # find 8 grid locations
+            x0 = tf.cast(tf.floor(x), "int32")
+            x1 = x0+1
+            y0 = tf.cast(tf.floor(y), "int32")
+            y1 = y0+1
+            z0 = tf.cast(tf.floor(z), "int32")
+            z1 = z0+1
+
+            # clip out coordinates exceeding feature map volume以外的点
+            x0 = tf.clip_by_value(x0, zero, max_x)
+            x1 = tf.clip_by_value(x1, zero, max_x)
+            y0 = tf.clip_by_value(y0, zero, max_y)
+            y1 = tf.clip_by_value(y1, zero, max_y)
+            z0 = tf.clip_by_value(z0, zero, max_z)
+            z1 = tf.clip_by_value(z1, zero, max_z) #[N*3H*3W*3D]
+
+            # convert input_feature and coordinate X, Y to 3D，for gathering
+            input_feature_flat = tf.reshape(input_feature, tf.stack([-1, self.num_channels])) #[N*H*W*D,C]
+
+            dimension_3 = self.depth
+            dimension_2 = self.depth*self.width
+            dimension_1 = self.depth*self.width*self.height
+            base = tf.range(self.num_batch)*dimension_1
+            repeat = tf.transpose(tf.expand_dims(tf.ones(shape=(tf.stack([self.num_points*self.height*self.width*self.depth,]))),1),[1,0]) #[1,H*W*D*27]
+            repeat = tf.cast(repeat,"int32") #[1,H*W*D*27]
+            base = tf.matmul(tf.reshape(base,(-1,1)),repeat) # [N,1] * [1,H*W*D*27] ==> [N,H*W*D*27]
+            base = tf.reshape(base, [-1]) #[H*W*D*27]
+            base_x0 = base + x0*dimension_3
+            base_x1 = base + x1*dimension_3
+            base_y0 = base + y0*dimension_2
+            base_y1 = base + y1*dimension_2
+
+            #top rectangle of the neighbourhood volume
+            index_a0 = base_y0 + base_x0 - base + z0
+            index_b0 = base_y0 + base_x1 - base + z0
+            index_c0 = base_y0 + base_x0 - base + z1
+            index_d0 = base_y0 + base_x1 - base + z1 #[N*3H*3W*3D]
+
+            #bottom rectangle of the neighbourhood volume
+            index_a1 = base_y1 + base_x0 - base + z0
+            index_b1 = base_y1 + base_x1 - base + z0
+            index_c1 = base_y1 + base_x0 - base + z1
+            index_d1 = base_y1 + base_x1 - base + z1 #[N*3H*3W*3D]
+
+            # get 8 grid values  ([N*H*W*D,C], [N*H*W*D*27])
+            value_a0 = tf.gather(input_feature_flat, index_a0)
+            value_b0 = tf.gather(input_feature_flat, index_b0)
+            value_c0 = tf.gather(input_feature_flat, index_c0)
+            value_d0 = tf.gather(input_feature_flat, index_d0) #[N*3H*3W*3D, C]
+            value_a1 = tf.gather(input_feature_flat, index_a1)
+            value_b1 = tf.gather(input_feature_flat, index_b1)
+            value_c1 = tf.gather(input_feature_flat, index_c1)
+            value_d1 = tf.gather(input_feature_flat, index_d1) #[N*3H*3W*3D, C]
+
+            # calculate 8 volumes : need to be diagonal volume for corresponding point
+            x0_float = tf.cast(x0, "float32")
+            x1_float = tf.cast(x1, "float32")
+            y0_float = tf.cast(y0, "float32")
+            y1_float = tf.cast(y1, "float32")
+            z0_float = tf.cast(z0, "float32")
+            z1_float = tf.cast(z1, "float32")
+            vol_a0 = tf.expand_dims(((x1_float-x)*(y1_float-y)*(z1_float-z)),1)
+            vol_b0 = tf.expand_dims(((x-x0_float)*(y1_float-y)*(z1_float-z)),1)
+            vol_c0 = tf.expand_dims(((x1_float-x)*(y1_float-y)*(z-z0_float)),1)
+            vol_d0 = tf.expand_dims(((x-x0_float)*(y1_float-y)*(z-z0_float)),1) 
+            vol_a1 = tf.expand_dims(((x1_float-x)*(y-y0_float)*(z1_float-z)),1)
+            vol_b1 = tf.expand_dims(((x-x0_float)*(y-y0_float)*(z1_float-z)),1)
+            vol_c1 = tf.expand_dims(((x1_float-x)*(y-y0_float)*(z-z0_float)),1)
+            vol_d1 = tf.expand_dims(((x-x0_float)*(y-y0_float)*(z-z0_float)),1) #[N*3H*3W*3D, 1]
+
+            ########################
+            outputs = tf.add_n([value_a0*vol_a0, value_b0*vol_b0, value_c0*vol_c0, value_d0*vol_d0,value_a1*vol_a1, value_b1*vol_b1, value_c1*vol_c1, value_d1*vol_d1])
+            outputs = tf.reshape(outputs, [self.num_batch, self.kernel_size[0]*self.height, self.kernel_size[1]*self.width, self.kernel_size[2]*self.depth, self.num_channels])
+
+        
+            return outputs #[N,3W,3H,3D,C]
+
+
+       
+    
+    """
+    deform_conv(self, inputs) operates deformable convolution
+    input：input feature map
+    output：output feature map
+    """
+    def deform_conv(self, inputs, offset, name, **kwargs):
+        with tf.variable_scope(name+"/DeformedFeature"):
+            x, y, z = self._coordinate_map_3D(offset, name)
+            deformed_feature = self._bilinear_interpolate_3D(inputs, x, y, z, name)
+            return deformed_feature
+
+
+class DCNN3D(Conv3D):
+    """DCNN3D
+    Convolutional layer responsible for learning the 3D offsets and output the
+    deformed feature map using bilinear interpolation
+    and then do further convolution
+    Note that this layer does not perform convolution on the deformed feature
+    map.
+    """
+
+    def __init__(self, nb_batch, num_outputs, kernel_size, scope, norm=True, d_format='NDHWC', **kwargs):
+    # def __init__(self, ):
+        """Init
+        """
+        self.nb_batch = nb_batch
+        self.num_outputs = num_outputs
+        self.kernel_size1 = [kernel_size] * 3
+        self.scope = scope
+        self.norm = norm
+        self.d_format = d_format
+        super(DCNN3D, self).__init__(
+            self.kernel_size1[0] * self.kernel_size1[1] * self.kernel_size1[2] * 3, (3, 3, 3), padding='same', use_bias=False,
+            kernel_initializer=keras.initializers.Zeros(),
+            **kwargs
+        )
+
+    def build(self, input_shape):
+        self.kernel11 = self.add_weight(name='kernel11',
+                                      shape=(self.kernel_size1[0], self.kernel_size1[1], self.kernel_size1[2], input_shape[4], self.num_outputs),
+                                      initializer='uniform',
+                                      trainable=True)
+        super(DCNN3D, self).build(input_shape)
+
+    def call(self, x):
+        """Return the deformed featured map"""
+        # generate offset-field
+        # offset = tf.contrib.layers.conv2d(
+        #     self.inputs, self.kernel_size1[0] * self.kernel_size1[1] * 2, [3, 3], scope=self.scope + '/offset',
+        #     data_format=self.d_format, activation_fn=None, weights_initializer=tf.zeros_initializer(dtype=tf.float32),
+        #     biases_initializer=None)
+        offset = super(DCNN3D, self).call(x)
+
+        # BN
+        # offset = tf.contrib.layers.batch_norm(
+        #     offset, decay=0.9, center=True, activation_fn=tf.nn.tanh,
+        #     updates_collections=None, epsilon=1e-5, scope=self.scope + '/offset' + '/batch_norm',
+        #     data_format='NHWC')
+        offset = tf.layers.batch_normalization(offset,trainable=False)
+        offset = tf.nn.tanh(offset)
+
+        # generate deformed feature
+        input_shape = [self.nb_batch, x.shape[1].value, x.shape[2].value, x.shape[3].value, x.shape[4].value]
+        dcn = DCN(input_shape, self.kernel_size1)
+        deformed_feature = dcn.deform_conv(x, offset, self.scope)
+
+        # return deformed_feature
+
+        # conv on the deformed feature
+        outputs = tf.nn.conv3d(deformed_feature, self.kernel11, strides=(1, self.kernel_size1[0], self.kernel_size1[1], self.kernel_size1[2], 1), padding="VALID")
+
+        if self.norm:
+            # outputs = tf.contrib.layers.batch_norm(
+            #     outputs, decay=0.9, center=True, activation_fn=tf.nn.relu,
+            #     updates_collections=None, epsilon=1e-5, scope=self.scope + '/batch_norm',
+            #     data_format='NHWC')
+            # outputs = BatchNormalization(axis=-1)(outputs)
+            outputs = tf.layers.batch_normalization(outputs)
+            outputs = tf.nn.relu(outputs, name=self.scope + '/relu')
         else:
-            self.mode = "regular"
-        
-    def forward(self, x):
-        if self.mode == "deformable":
-            offset = self.offset_conv_kernel(x)
-        else:
-            b, c, h, w, d = x.size()
-            offset = torch.zeros(b, 3 * self.kernel_size ** 3, h, w, d).to(x)
-        
-        dtype = offset.data.type()
-        ks = self.kernel_size
-        N = offset.size(1) // 3
+            outputs = tf.nn.relu(outputs, name=self.scope + '/relu')
+        return outputs
 
-        if self.padding:
-            x = self.zero_padding(x)
-
-        # (b, 3N, h, w, d)
-        p = self._get_p(offset, dtype)
-        p = p[:, :, ::self.stride, ::self.stride, ::self.stride]
-
-        # (b, h, w, d, 3N), N == ks ** 3, 3N - 3 coords for each point on the activation map
-        p = p.contiguous().permute(0, 2, 3, 4, 1) # 5D array
-        
-        q_sss = Variable(p.data, requires_grad=False).floor() # point with all smaller coords
-#         q_sss = p.data.floor() - same? / torch.Tensor(p.data).floor()
-        q_lll = q_sss + 1 # all larger coords
-
-        # 8 neighbor points with integer coords
-        q_sss = torch.cat([
-            torch.clamp(q_sss[..., :N], 0, x.size(2) - 1), # h_coord
-            torch.clamp(q_sss[..., N:2 * N], 0, x.size(3) - 1), # w_coord
-            torch.clamp(q_sss[..., 2 * N:], 0, x.size(4) - 1) # d_coord
-        ], dim=-1).long()
-        q_lll = torch.cat([
-            torch.clamp(q_lll[..., :N], 0, x.size(2) - 1), # h_coord
-            torch.clamp(q_lll[..., N:2 * N], 0, x.size(3) - 1), # w_coord
-            torch.clamp(q_lll[..., 2 * N:], 0, x.size(4) - 1) # d_coord
-        ], dim=-1).long()
-        q_ssl = torch.cat([q_sss[..., :N], q_sss[..., N:2 * N], q_lll[..., 2 * N:]], -1)
-        q_sls = torch.cat([q_sss[..., :N], q_lll[..., N:2 * N], q_sss[..., 2 * N:]], -1)
-        q_sll = torch.cat([q_sss[..., :N], q_lll[..., N:2 * N], q_lll[..., 2 * N:]], -1)
-        q_lss = torch.cat([q_lll[..., :N], q_sss[..., N:2 * N], q_sss[..., 2 * N:]], -1)
-        q_lsl = torch.cat([q_lll[..., :N], q_sss[..., N:2 * N], q_lll[..., 2 * N:]], -1)
-        q_lls = torch.cat([q_lll[..., :N], q_lll[..., N:2 * N], q_sss[..., 2 * N:]], -1)
-
-        # (b, h, w, d, N)
-        mask = torch.cat([
-            p[..., :N].lt(self.padding) + p[..., :N].gt(x.size(2) - 1 - self.padding),
-            p[..., N:2 * N].lt(self.padding) + p[..., N:2 * N].gt(x.size(3) - 1 - self.padding),
-            p[..., 2 * N:].lt(self.padding) + p[..., 2 * N:].gt(x.size(4) - 1 - self.padding),
-        ], dim=-1).type_as(p)
-        mask = mask.detach()
-        floor_p = p - (p - torch.floor(p)) # все еще непонятно, что тут происходит за wtf
-        p = p * (1 - mask) + floor_p * mask
-        
-        p = torch.cat([
-            torch.clamp(p[..., :N], 0, x.size(2) - 1),
-            torch.clamp(p[..., N:2 * N], 0, x.size(3) - 1),
-            torch.clamp(p[..., 2 * N:], 0, x.size(4) - 1),
-        ], dim=-1)
-        
-        # trilinear kernel (b, h, w, d, N)  
-        g_sss = (1 + (q_sss[..., :N].type_as(p) - p[..., :N])) * (1 + (q_sss[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 + (q_sss[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_lll = (1 - (q_lll[..., :N].type_as(p) - p[..., :N])) * (1 - (q_lll[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 - (q_lll[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_ssl = (1 + (q_ssl[..., :N].type_as(p) - p[..., :N])) * (1 + (q_ssl[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 - (q_ssl[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_sls = (1 + (q_sls[..., :N].type_as(p) - p[..., :N])) * (1 - (q_sls[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 + (q_sls[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_sll = (1 + (q_sll[..., :N].type_as(p) - p[..., :N])) * (1 - (q_sll[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 - (q_sll[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_lss = (1 - (q_lss[..., :N].type_as(p) - p[..., :N])) * (1 + (q_lss[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 + (q_lss[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_lsl = (1 - (q_lsl[..., :N].type_as(p) - p[..., :N])) * (1 + (q_lsl[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 - (q_lsl[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        g_lls = (1 - (q_lls[..., :N].type_as(p) - p[..., :N])) * (1 - (q_lls[..., N:2 * N].type_as(p) - p[..., N:2 * N])) * (1 + (q_lls[..., 2 * N:].type_as(p) - p[..., 2 * N:]))
-        
-        # get values in all 8 neighbor points
-        # (b, c, h, w, d, N) - 6D-array
-        x_q_sss = self._get_x_q(x, q_sss, N)
-        x_q_lll = self._get_x_q(x, q_lll, N)
-        x_q_ssl = self._get_x_q(x, q_ssl, N)
-        x_q_sls = self._get_x_q(x, q_sls, N)
-        x_q_sll = self._get_x_q(x, q_sll, N)
-        x_q_lss = self._get_x_q(x, q_lss, N)
-        x_q_lsl = self._get_x_q(x, q_lsl, N)
-        x_q_lls = self._get_x_q(x, q_lls, N)
-        
-        # (b, c, h, w, d, N)
-        x_offset = g_sss.unsqueeze(dim=1) * x_q_sss + \
-                   g_lll.unsqueeze(dim=1) * x_q_lll + \
-                   g_ssl.unsqueeze(dim=1) * x_q_ssl + \
-                   g_sls.unsqueeze(dim=1) * x_q_sls + \
-                   g_sll.unsqueeze(dim=1) * x_q_sll + \
-                   g_lss.unsqueeze(dim=1) * x_q_lss + \
-                   g_lsl.unsqueeze(dim=1) * x_q_lsl + \
-                   g_lls.unsqueeze(dim=1) * x_q_lls
-        
-        x_offset = self._reshape_x_offset(x_offset, ks)
-        out = self.conv_kernel(x_offset)
-        
-        return out
-    
-    def _get_p_n(self, N, dtype):
-        p_n_x, p_n_y, p_n_z = np.meshgrid(
-            range(-(self.kernel_size - 1) // 2, (self.kernel_size - 1) // 2 + 1),
-            range(-(self.kernel_size - 1) // 2, (self.kernel_size - 1) // 2 + 1),
-            range(-(self.kernel_size - 1) // 2, (self.kernel_size - 1) // 2 + 1), 
-            indexing='ij')
-        
-        # (3N, 1) - 3 coords for each of N offsets
-        # (x1, ... xN, y1, ... yN, z1, ... zN)
-        p_n = np.concatenate((p_n_x.flatten(), p_n_y.flatten(), p_n_z.flatten()))
-        p_n = np.reshape(p_n, (1, 3 * N, 1, 1, 1))
-        p_n = torch.from_numpy(p_n).type(dtype)
-        
-        return p_n
-    
-    @staticmethod
-    def _get_p_0(h, w, d, N, dtype):
-        p_0_x, p_0_y, p_0_z = np.meshgrid(range(1, h + 1), range(1, w + 1), range(1, d + 1), indexing='ij')
-        p_0_x = p_0_x.flatten().reshape(1, 1, h, w, d).repeat(N, axis=1)
-        p_0_y = p_0_y.flatten().reshape(1, 1, h, w, d).repeat(N, axis=1)
-        p_0_z = p_0_z.flatten().reshape(1, 1, h, w, d).repeat(N, axis=1)
-        p_0 = np.concatenate((p_0_x, p_0_y, p_0_z), axis=1)
-        p_0 = torch.from_numpy(p_0).type(dtype)
-
-        return p_0
-    
-    def _get_p(self, offset, dtype):
-        N, h, w, d = offset.size(1) // 3, offset.size(2), offset.size(3), offset.size(4)
-
-        # (1, 3N, 1, 1, 1)
-        p_n = self._get_p_n(N, dtype).to(offset)
-        # (1, 3N, h, w, d)
-        p_0 = self._get_p_0(h, w, d, N, dtype).to(offset)
-        p = p_0 + p_n + offset
-        
-        return p
-    
-    def _get_x_q(self, x, q, N):
-        b, h, w, d, _ = q.size()
-        
-        #           (0, 1, 2, 3, 4)
-        # x.size == (b, c, h, w, d)
-        padded_w = x.size(3)
-        padded_d = x.size(4)
-        c = x.size(1)
-        # (b, c, h*w*d)
-        x = x.contiguous().view(b, c, -1)
-
-        # (b, h, w, d, N)
-        # offset_x * w * d + offset_y * d + offset_z
-        index = q[..., :N] * padded_w * padded_d + q[..., N:2 * N] * padded_d + q[..., 2 * N:]
-        # (b, c, h*w*d*N)
-        index = index.contiguous().unsqueeze(dim=1).expand(-1, c, -1, -1, -1, -1).contiguous().view(b, c, -1)
-        
-        x_offset = x.gather(dim=-1, index=index).contiguous().view(b, c, h, w, d, N)
-        
-        return x_offset
-
-    @staticmethod
-    def _reshape_x_offset(x_offset, ks):
-        b, c, h, w, d, N = x_offset.size()
-        x_offset = x_offset.permute(0, 1, 5, 2, 3, 4)
-        x_offset = x_offset.contiguous().view(b, c * N, h, w, d)
-
-        return x_offset
-        
-def deform_conv3x3x3(in_planes, out_planes, stride=1):
-    # 3x3x3 convolution with padding
-    return DeformConv3d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
-
-
-class DeformBasicBlock(nn.Module):
-    def __init__(self, inplanes, planes, stride=1):
-        super(DeformBasicBlock, self).__init__()
-        self.conv1 = deform_conv3x3x3(inplanes, planes, stride)
-        self.bn1 = nn.BatchNorm3d(planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = deform_conv3x3x3(planes, planes)
-        self.bn2 = nn.BatchNorm3d(planes)
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
-    
-    
-class Flatten(nn.Module):
-    def forward(self, input):
-        return input.view(input.size(0), -1)
-
-
-class Identity(nn.Module):
-    def __init__(self,):
-        super(Identity, self).__init__()
-        
-    def forward(self, x):
-        return x
-
-
-class Reshape(nn.Module):
-    def __init__(self, shape):
-        nn.Module.__init__(self)
-        self.shape = shape
-    def forward(self, input):
-        return input.view((-1,) + self.shape)
-
-
-def conv3x3x3(in_planes, out_planes, stride=1):
-    # 3x3x3 convolution with padding
-    return nn.Conv3d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
-
-
-class BasicBlock(nn.Module):
-    def __init__(self, inplanes, planes, stride=1):
-        super(BasicBlock, self).__init__()
-        self.conv1 = conv3x3x3(inplanes, planes, stride)
-        self.bn1 = nn.BatchNorm3d(planes)
-        self.relu = nn.ReLU(inplace=True)
-        self.conv2 = conv3x3x3(planes, planes)
-        self.bn2 = nn.BatchNorm3d(planes)
-        self.stride = stride
-
-    def forward(self, x):
-        residual = x
-
-        out = self.conv1(x)
-        out = self.bn1(out)
-        out = self.relu(out)
-
-        out = self.conv2(out)
-        out = self.bn2(out)
-
-        out += residual
-        out = self.relu(out)
-
-        return out
+    def compute_output_shape(self, input_shape):
+        """Output shape is the same as input shape except the num_channels
+        """
+        return (input_shape[0], input_shape[1], input_shape[2], input_shape[3], self.num_outputs)
+        # return (input_shape[0], self.kernel_size1[0]*input_shape[1], self.kernel_size1[1]*input_shape[2], input_shape[3])
