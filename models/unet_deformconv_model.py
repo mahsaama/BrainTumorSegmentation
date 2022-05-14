@@ -91,7 +91,7 @@ class UNet3D_DCN:
         merge9 = concatenate([conv1, up9], axis=-1)
         conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(merge9)
         conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(conv9)
-        output = DCN3D(4, 1, self.batch_size, activation="softmax")(conv9)
+        output = Conv3D(4, 1, activation="softmax")(conv9)
 
         return Model(inputs=inputs, outputs=output, name="UnetDCN")
 
