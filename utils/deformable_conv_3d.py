@@ -25,8 +25,8 @@ class ConvOffset3D(Conv3D):
         # TODO offsets probably have no nonlinearity?
         offsets = super(ConvOffset3D, self).call(x)
 
-        # offsets = BatchNormalization()(offsets, training=False)
-        # offsets = tf.nn.tanh(offsets)
+        offsets = BatchNormalization()(offsets, training=False)
+        offsets = tf.nn.tanh(offsets)
 
         # generate deformed feature
         input_shape = [
@@ -73,6 +73,15 @@ class DCN(object):
 
     def _coordinate_map_3D(self, offset_field):
         # offset
+        print(offset_field.get_shape())
+        print(
+            self.num_batch,
+            self.height,
+            self.width,
+            self.depth,
+            3,
+            self.num_points,
+        )
         reshaped = tf.reshape(
             offset_field,
             [
