@@ -98,6 +98,7 @@ class UNet3D_DCN:
     @tf.function
     def train_step(self, image, target):
         with tf.GradientTape() as tape:
+            print("hereeeeee")
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
 
@@ -191,7 +192,7 @@ class UNet3D_DCN:
             # save models
             print(" ")
             if epoch_dice_loss_val.result() < prev_loss:
-                self.model.save_weights(self.path + "/UNET.h5")
+                self.model.save_weights(self.path + "/UNET_DCN.h5")
                 print(
                     "Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(
                         prev_loss, epoch_dice_loss_val.result()
