@@ -98,13 +98,13 @@ class UNet3D_DCN:
     @tf.function
     def train_step(self, image, target):
         with tf.GradientTape() as tape:
-            print("hereeeeee")
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
 
         gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
+        print("hereeeeee")
         return dice_loss, dice_percent
 
     @tf.function
