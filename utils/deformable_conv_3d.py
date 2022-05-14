@@ -54,19 +54,7 @@ class DCN3D(Conv3D):
         dcn = DCN(input_shape, self.kernel_size)
         outputs = dcn.deform_conv(x, offsets)
 
-        outputs = Conv3D(
-            self.kernel11,
-            strides=(
-                1,
-                self.kernel_size[0],
-                self.kernel_size[1],
-                self.kernel_size[2],
-                1,
-            ),
-            padding="valid",
-        )(outputs)
-        # outputs = tf.nn.conv3d(
-        #     outputs,
+        # outputs = Conv3D(
         #     self.kernel11,
         #     strides=(
         #         1,
@@ -75,8 +63,20 @@ class DCN3D(Conv3D):
         #         self.kernel_size[2],
         #         1,
         #     ),
-        #     padding="VALID",
-        # )
+        #     padding="valid",
+        # )(outputs)
+        outputs = tf.nn.conv3d(
+            outputs,
+            self.kernel11,
+            strides=(
+                1,
+                self.kernel_size[0],
+                self.kernel_size[1],
+                self.kernel_size[2],
+                1,
+            ),
+            padding="VALID",
+        )
 
         outputs = Activation(self.activation)(outputs)
         return outputs
