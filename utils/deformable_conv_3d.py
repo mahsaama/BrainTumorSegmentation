@@ -12,6 +12,7 @@ class DCN3D(Conv3D):
         self.kernel_size = [kernel_size] * 3
         self.nb_batch = nb_batch
         self.activation = activation
+        self.batch_normalizer = BatchNormalization()
         super(DCN3D, self).__init__(
             self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2] * 3,
             self.kernel_size,
@@ -40,7 +41,7 @@ class DCN3D(Conv3D):
     def call(self, x):
         # TODO offsets probably have no nonlinearity?
         offsets = super(DCN3D, self).call(x)
-        offsets = BatchNormalization()(offsets, training=False)
+        offsets = self.batch_normalizer(offsets, training=False)
         offsets = Activation("tanh")(offsets)
         # generate deformed feature
         input_shape = [
