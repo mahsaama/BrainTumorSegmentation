@@ -5,10 +5,11 @@ from tensorflow.keras.layers import BatchNormalization, Conv3D
 class ConvOffset3D(Conv3D):
     """ConvOffset3D"""
 
-    def __init__(self, filters, nb_batch=4, **kwargs):
+    def __init__(self, filters, kernel_size=3, nb_batch=4, **kwargs):
         """Init"""
 
         self.filters = filters
+        self.kernel_size = [kernel_size] * 3
         self.nb_batch = nb_batch
         super(ConvOffset3D, self).__init__(
             self.filters,
@@ -36,7 +37,7 @@ class ConvOffset3D(Conv3D):
             x.shape[4],
         ]
 
-        dcn = DCN(input_shape, self.kernel_size1)
+        dcn = DCN(input_shape, self.kernel_size)
         deformed_feature = dcn.deform_conv(x, offsets, self.scope)
         return deformed_feature
 
