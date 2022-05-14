@@ -38,7 +38,7 @@ class ConvOffset3D(Conv3D):
         ]
 
         dcn = DCN(input_shape, self.kernel_size)
-        deformed_feature = dcn.deform_conv(x, offsets, self.scope)
+        deformed_feature = dcn.deform_conv(x, offsets)
         return deformed_feature
 
 
@@ -71,7 +71,7 @@ class DCN(object):
     output：[N,3W,3H,3D] coordinate map
     """
 
-    def _coordinate_map_3D(self, offset_field, name):
+    def _coordinate_map_3D(self, offset_field):
         # offset
         # x_offset, y_offset = tf.split(tf.reshape(offset_field, [self.num_batch, self.height, self.width, 2, self.num_points]),2,3)
         x_offset, y_offset, z_offset = tf.split(
@@ -261,7 +261,7 @@ class DCN(object):
     output：[3W,3H,C1] deformed feature map
     """
 
-    def _bilinear_interpolate_3D(self, input_feature, x, y, z, name):
+    def _bilinear_interpolate_3D(self, input_feature, x, y, z):
         # flatten to 1D
         x = tf.reshape(x, [-1])
         y = tf.reshape(y, [-1])
@@ -398,7 +398,7 @@ class DCN(object):
     output：output feature map
     """
 
-    def deform_conv(self, inputs, offset, name, **kwargs):
-        x, y, z = self._coordinate_map_3D(offset, name)
-        deformed_feature = self._bilinear_interpolate_3D(inputs, x, y, z, name)
+    def deform_conv(self, inputs, offset, **kwargs):
+        x, y, z = self._coordinate_map_3D(offset)
+        deformed_feature = self._bilinear_interpolate_3D(inputs, x, y, z)
         return deformed_feature

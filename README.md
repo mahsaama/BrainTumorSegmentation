@@ -109,7 +109,7 @@ For running **AttGAN** model use this:
 python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m att_gan
 ```
 
-For running **UNet3D_with_DeformConv** model use this:
+For running **UNet3D_DCN** model use this:
 ```bash
 python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 2 -aug 1 -m unet_dc
 ```
