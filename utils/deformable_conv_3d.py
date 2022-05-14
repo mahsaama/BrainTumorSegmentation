@@ -5,11 +5,11 @@ from tensorflow.keras.layers import BatchNormalization, Conv3D
 class ConvOffset3D(Conv3D):
     """ConvOffset3D"""
 
-    def __init__(self, filters, kernel_size=3, nb_batch=4, **kwargs):
+    def __init__(self, filters, kernel_size=(3, 3, 3), nb_batch=4, **kwargs):
         """Init"""
 
         self.filters = filters
-        self.kernel_size = [kernel_size] * 3
+        self.kernel_size = kernel_size
         self.nb_batch = nb_batch
         super(ConvOffset3D, self).__init__(
             self.filters,
@@ -73,7 +73,6 @@ class DCN(object):
 
     def _coordinate_map_3D(self, offset_field):
         # offset
-        # x_offset, y_offset = tf.split(tf.reshape(offset_field, [self.num_batch, self.height, self.width, 2, self.num_points]),2,3)
         x_offset, y_offset, z_offset = tf.split(
             tf.reshape(
                 offset_field,

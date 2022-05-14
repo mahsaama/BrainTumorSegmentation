@@ -86,7 +86,7 @@ class UNet3D_DCN:
         drop5 = Dropout(0.5)(conv5)
 
         up6 = Conv3D(512, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(512, 2)(drop5))
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(512, (2, 2, 2))(drop5))
         )
         merge6 = concatenate([drop4, up6], axis=-1)
         conv6 = Conv3D(512, 3, activation="relu", padding="same")(
@@ -97,7 +97,7 @@ class UNet3D_DCN:
         )
 
         up7 = Conv3D(256, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(256, 2)(conv6))
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(256, (2, 2, 2))(conv6))
         )
         merge7 = concatenate([conv3, up7], axis=-1)
         conv7 = Conv3D(256, 3, activation="relu", padding="same")(
@@ -108,7 +108,7 @@ class UNet3D_DCN:
         )
 
         up8 = Conv3D(128, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(128, 2)(conv7))
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(128, (2, 2, 2))(conv7))
         )
         merge8 = concatenate([conv2, up8], axis=-1)
         conv8 = Conv3D(128, 3, activation="relu", padding="same")(
@@ -119,7 +119,7 @@ class UNet3D_DCN:
         )
 
         up9 = Conv3D(64, 2, activation="relu", padding="same")(
-            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(64, 2)(conv8))
+            UpSampling3D(size=(2, 2, 2))(ConvOffset3D(64, (2, 2, 2))(conv8))
         )
         merge9 = concatenate([conv1, up9], axis=-1)
         conv9 = Conv3D(64, 3, activation="relu", padding="same")(
