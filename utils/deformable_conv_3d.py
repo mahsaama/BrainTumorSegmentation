@@ -13,7 +13,7 @@ class ConvOffset3D(Conv3D):
         self.nb_batch = nb_batch
         super(ConvOffset3D, self).__init__(
             self.filters,
-            (3, 3, 3),
+            self.kernel_size,
             padding="same",
             use_bias=False,
             # TODO gradients are near zero if init is zeros
@@ -66,9 +66,9 @@ class DCN(object):
         self.extend_scope = 3.0
 
     """
-    _coordinate_map(self, offset_field) will generate [3W,3H,3D] coordinate map
-    input：offset field: [N,H,W,D,3*3*3*3]
-    output：[N,3W,3H,3D] coordinate map
+    _coordinate_map(self, offset_field) will generate [4W,4H,4D] coordinate map
+    input：offset field: [N,H,W,D,4*4*4*4]
+    output：[N,4W,4H,4D] coordinate map
     """
 
     def _coordinate_map_3D(self, offset_field):
@@ -81,14 +81,14 @@ class DCN(object):
                     self.height,
                     self.width,
                     self.depth,
-                    3,
+                    4,
                     self.num_points,
                 ],
             ),
             3,
             4,
         )
-        x_offset = tf.squeeze(x_offset)  # [N,H,W,D,3*3*3]
+        x_offset = tf.squeeze(x_offset)  # [N,H,W,D,4*4*4]
         y_offset = tf.squeeze(y_offset)
         z_offset = tf.squeeze(z_offset)
 
@@ -183,7 +183,7 @@ class DCN(object):
         # uncomment this to be normal CNN layer
         # x = tf.add_n([x_center, x_grid, tf.multiply(0.0, x_offset)])
         # y = tf.add_n([y_center, y_grid, tf.multiply(0.0, y_offset)])
-        # z = tf.add_n([z_center, z_grid, tf.multiply(0.0, z_offset)]) #[N,H,W,D,3*3*3]
+        # z = tf.add_n([z_center, z_grid, tf.multiply(0.0, z_offset)]) #[N,H,W,D,4*4*4]
 
         # reshape N*H*W*D*num_points to N*3H*3W*3D
         x_new = tf.reshape(
@@ -264,7 +264,7 @@ class DCN(object):
         # flatten to 1D
         x = tf.reshape(x, [-1])
         y = tf.reshape(y, [-1])
-        z = tf.reshape(z, [-1])  # [N*3W*3H*3D]
+        z = tf.reshape(z, [-1])  # [N*4W*4H*4D]
 
         # data type convertion
         x = tf.cast(x, "float32")
@@ -289,7 +289,7 @@ class DCN(object):
         y0 = tf.clip_by_value(y0, zero, max_y)
         y1 = tf.clip_by_value(y1, zero, max_y)
         z0 = tf.clip_by_value(z0, zero, max_z)
-        z1 = tf.clip_by_value(z1, zero, max_z)  # [N*3H*3W*3D]
+        z1 = tf.clip_by_value(z1, zero, max_z)  # [N*4H*4W*4D]
 
         # convert input_feature and coordinate X, Y to 3D，for gathering
         input_feature_flat = tf.reshape(
@@ -314,12 +314,12 @@ class DCN(object):
                 1,
             ),
             [1, 0],
-        )  # [1,H*W*D*27]
-        repeat = tf.cast(repeat, "int32")  # [1,H*W*D*27]
+        )  # [1,H*W*D*64]
+        repeat = tf.cast(repeat, "int32")  # [1,H*W*D*64]
         base = tf.matmul(
             tf.reshape(base, (-1, 1)), repeat
-        )  # [N,1] * [1,H*W*D*27] ==> [N,H*W*D*27]
-        base = tf.reshape(base, [-1])  # [H*W*D*27]
+        )  # [N,1] * [1,H*W*D*64] ==> [N,H*W*D*64]
+        base = tf.reshape(base, [-1])  # [H*W*D*64]
         base_x0 = base + x0 * dimension_3
         base_x1 = base + x1 * dimension_3
         base_y0 = base + y0 * dimension_2
@@ -329,23 +329,23 @@ class DCN(object):
         index_a0 = base_y0 + base_x0 - base + z0
         index_b0 = base_y0 + base_x1 - base + z0
         index_c0 = base_y0 + base_x0 - base + z1
-        index_d0 = base_y0 + base_x1 - base + z1  # [N*3H*3W*3D]
+        index_d0 = base_y0 + base_x1 - base + z1  # [N*4H*4W*4D]
 
         # bottom rectangle of the neighbourhood volume
         index_a1 = base_y1 + base_x0 - base + z0
         index_b1 = base_y1 + base_x1 - base + z0
         index_c1 = base_y1 + base_x0 - base + z1
-        index_d1 = base_y1 + base_x1 - base + z1  # [N*3H*3W*3D]
+        index_d1 = base_y1 + base_x1 - base + z1  # [N*4H*4W*4D]
 
-        # get 8 grid values  ([N*H*W*D,C], [N*H*W*D*27])
+        # get 8 grid values  ([N*H*W*D,C], [N*H*W*D*64])
         value_a0 = tf.gather(input_feature_flat, index_a0)
         value_b0 = tf.gather(input_feature_flat, index_b0)
         value_c0 = tf.gather(input_feature_flat, index_c0)
-        value_d0 = tf.gather(input_feature_flat, index_d0)  # [N*3H*3W*3D, C]
+        value_d0 = tf.gather(input_feature_flat, index_d0)  # [N*4H*4W*4D, C]
         value_a1 = tf.gather(input_feature_flat, index_a1)
         value_b1 = tf.gather(input_feature_flat, index_b1)
         value_c1 = tf.gather(input_feature_flat, index_c1)
-        value_d1 = tf.gather(input_feature_flat, index_d1)  # [N*3H*3W*3D, C]
+        value_d1 = tf.gather(input_feature_flat, index_d1)  # [N*4H*4W*4D, C]
 
         # calculate 8 volumes : need to be diagonal volume for corresponding point
         x0_float = tf.cast(x0, "float32")
@@ -363,7 +363,7 @@ class DCN(object):
         vol_c1 = tf.expand_dims(((x1_float - x) * (y - y0_float) * (z - z0_float)), 1)
         vol_d1 = tf.expand_dims(
             ((x - x0_float) * (y - y0_float) * (z - z0_float)), 1
-        )  # [N*3H*3W*3D, 1]
+        )  # [N*4H*4W*4D, 1]
 
         ########################
         outputs = tf.add_n(
@@ -389,7 +389,7 @@ class DCN(object):
             ],
         )
 
-        return outputs  # [N,3W,3H,3D,C]
+        return outputs  # [N,4W,4H,4D,C]
 
     """
     deform_conv(self, inputs) operates deformable convolution
