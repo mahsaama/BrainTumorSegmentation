@@ -120,7 +120,6 @@ class DCN(object):
                 self.num_points,
             ],
         )
-        print(reshaped.get_shape())
         x_offset, y_offset, z_offset = tf.split(reshaped, 3, 4)
         x_offset = tf.squeeze(x_offset)  # [N,H,W,D,3*3*3]
         y_offset = tf.squeeze(y_offset)

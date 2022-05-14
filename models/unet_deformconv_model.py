@@ -50,47 +50,47 @@ class UNet3D_DCN:
         conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(conv1)
         pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
-        conv2 = DCN3D(128, 3, self.batch_size, activation="relu", padding="same")(pool1)
-        conv2 = DCN3D(128, 3, self.batch_size, activation="relu", padding="same")(conv2)
+        conv2 = DCN3D(128, 3, self.batch_size, activation="relu")(pool1)
+        conv2 = DCN3D(128, 3, self.batch_size, activation="relu")(conv2)
         pool2 = MaxPooling3D(pool_size=(2, 2, 2))(conv2)
 
-        conv3 = DCN3D(256, 3, self.batch_size, activation="relu", padding="same")(pool2)
-        conv3 = DCN3D(256, 3, self.batch_size, activation="relu", padding="same")(conv3)
+        conv3 = DCN3D(256, 3, self.batch_size, activation="relu")(pool2)
+        conv3 = DCN3D(256, 3, self.batch_size, activation="relu")(conv3)
         pool3 = MaxPooling3D(pool_size=(2, 2, 2))(conv3)
 
-        conv4 = DCN3D(512, 3, self.batch_size, activation="relu", padding="same")(pool3)
-        conv4 = DCN3D(512, 3, self.batch_size, activation="relu", padding="same")(conv4)
+        conv4 = DCN3D(512, 3, self.batch_size, activation="relu")(pool3)
+        conv4 = DCN3D(512, 3, self.batch_size, activation="relu")(conv4)
         drop4 = Dropout(0.5)(conv4)
         pool4 = MaxPooling3D(pool_size=(2, 2, 2))(drop4)
 
-        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu", padding="same")(pool4)
-        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu", padding="same")(conv5)
+        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu")(pool4)
+        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu")(conv5)
         drop5 = Dropout(0.5)(conv5)
 
-        up6 = DCN3D(512, 2, self.batch_size, activation="relu", padding="same")(
+        up6 = DCN3D(512, 2, self.batch_size, activation="relu")(
             UpSampling3D(size=(2, 2, 2))(drop5)
         )
         merge6 = concatenate([drop4, up6], axis=-1)
-        conv6 = DCN3D(512, 3, self.batch_size, activation="relu", padding="same")(merge6)
-        conv6 = DCN3D(512, 3, self.batch_size, activation="relu", padding="same")(conv6)
+        conv6 = DCN3D(512, 3, self.batch_size, activation="relu")(merge6)
+        conv6 = DCN3D(512, 3, self.batch_size, activation="relu")(conv6)
 
-        up7 = DCN3D(256, 2, self.batch_size, activation="relu", padding="same")(
+        up7 = DCN3D(256, 2, self.batch_size, activation="relu")(
             UpSampling3D(size=(2, 2, 2))(conv6))
         merge7 = concatenate([conv3, up7], axis=-1)
-        conv7 = DCN3D(256, 3, self.batch_size, activation="relu", padding="same")(merge7)
-        conv7 = DCN3D(256, 3, self.batch_size, activation="relu", padding="same")(conv7)
+        conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(merge7)
+        conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(conv7)
 
-        up8 = DCN3D(128, 2, self.batch_size, activation="relu", padding="same")(
+        up8 = DCN3D(128, 2, self.batch_size, activation="relu")(
             UpSampling3D(size=(2, 2, 2))(conv7))
         merge8 = concatenate([conv2, up8], axis=-1)
-        conv8 = DCN3D(128, 3, self.batch_size, activation="relu", padding="same")(merge8)
-        conv8 = DCN3D(128, 3, self.batch_size, activation="relu", padding="same")(conv8)
+        conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(merge8)
+        conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(conv8)
 
-        up9 = DCN3D(64, 2, self.batch_size, activation="relu", padding="same")(
+        up9 = DCN3D(64, 2, self.batch_size, activation="relu")(
             UpSampling3D(size=(2, 2, 2))(conv8))
         merge9 = concatenate([conv1, up9], axis=-1)
-        conv9 = DCN3D(64, 3, self.batch_size, activation="relu", padding="same")(merge9)
-        conv9 = DCN3D(64, 3, self.batch_size, activation="relu", padding="same")(conv9)
+        conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(merge9)
+        conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(conv9)
         output = Conv3D(4, 1, activation="softmax")(conv9)
 
         return Model(inputs=inputs, outputs=output, name="UnetDCN")
