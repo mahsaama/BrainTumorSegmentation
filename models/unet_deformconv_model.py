@@ -20,7 +20,16 @@ from utils.deformable_conv_3d import DCNN3D
 
 
 class UNet3D_with_DeformConv:
-    def __init__(self, batch_size, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
+    def __init__(
+        self,
+        batch_size,
+        patch_size,
+        n_classes,
+        class_weights,
+        path,
+        lr=2e-4,
+        beta_1=0.5,
+    ):
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.n_classes = n_classes
@@ -66,7 +75,9 @@ class UNet3D_with_DeformConv:
         conv5 = Activation("relu")(conv5)
         drop5 = Dropout(0.5)(conv5)
 
-        up6 = DCNN3D(self.batch_size, 512, 2, scope="dc11")(UpSampling3D(size=(2, 2, 2))(drop5))
+        up6 = DCNN3D(self.batch_size, 512, 2, scope="dc11")(
+            UpSampling3D(size=(2, 2, 2))(drop5)
+        )
         up6 = Activation("relu")(up6)
         merge6 = concatenate([drop4, up6], axis=-1)
         conv6 = DCNN3D(self.batch_size, 512, 3, scope="dc12")(merge6)
@@ -74,7 +85,9 @@ class UNet3D_with_DeformConv:
         conv6 = DCNN3D(self.batch_size, 512, 3, scope="dc13")(conv6)
         conv6 = Activation("relu")(conv6)
 
-        up7 = DCNN3D(self.batch_size, 256, 2, scope="dc14")(UpSampling3D(size=(2, 2, 2))(conv6))
+        up7 = DCNN3D(self.batch_size, 256, 2, scope="dc14")(
+            UpSampling3D(size=(2, 2, 2))(conv6)
+        )
         up7 = Activation("relu")(up7)
         merge7 = concatenate([conv3, up7], axis=-1)
         conv7 = DCNN3D(self.batch_size, 256, 3, scope="dc15")(merge7)
@@ -82,7 +95,9 @@ class UNet3D_with_DeformConv:
         conv7 = DCNN3D(self.batch_size, 256, 3, scope="dc16")(conv7)
         conv7 = Activation("relu")(conv7)
 
-        up8 = DCNN3D(self.batch_size, 128, 2, scope="dc17")(UpSampling3D(size=(2, 2, 2))(conv7))
+        up8 = DCNN3D(self.batch_size, 128, 2, scope="dc17")(
+            UpSampling3D(size=(2, 2, 2))(conv7)
+        )
         up8 = Activation("relu")(up8)
         merge8 = concatenate([conv2, up8], axis=-1)
         conv8 = DCNN3D(self.batch_size, 128, 3, scope="dc18")(merge8)
@@ -90,7 +105,9 @@ class UNet3D_with_DeformConv:
         conv8 = DCNN3D(self.batch_size, 128, 3, scope="dc19")(conv8)
         conv8 = Activation("relu")(conv8)
 
-        up9 = DCNN3D(self.batch_size, 64, 2, scope="dc20")(UpSampling3D(size=(2, 2, 2))(conv8))
+        up9 = DCNN3D(self.batch_size, 64, 2, scope="dc20")(
+            UpSampling3D(size=(2, 2, 2))(conv8)
+        )
         up9 = Activation("relu")(up9)
         merge9 = concatenate([conv1, up9], axis=-1)
         conv9 = DCNN3D(self.batch_size, 64, 3, scope="dc21")(merge9)
