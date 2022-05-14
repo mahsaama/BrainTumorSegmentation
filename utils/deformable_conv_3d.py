@@ -80,7 +80,7 @@ class DCN(object):
                 self.height,
                 self.width,
                 self.depth,
-                self.num_channels,
+                3,
                 self.num_points,
             ],
         )
