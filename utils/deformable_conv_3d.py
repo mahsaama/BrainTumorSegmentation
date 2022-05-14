@@ -45,8 +45,8 @@ class DCN3D(Conv3D):
     def call(self, x):
         # TODO offsets probably have no nonlinearity?
         offsets = super(DCN3D, self).call(x)
-        offsets = BatchNormalization()(offsets, training=False)
-        offsets = tf.nn.tanh(offsets)
+        # offsets = BatchNormalization()(offsets, training=False)
+        # offsets = tf.nn.tanh(offsets)
         # generate deformed feature
         input_shape = [
             self.nb_batch,
