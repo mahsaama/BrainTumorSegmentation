@@ -1,4 +1,3 @@
-from black import out
 import tensorflow as tf
 from tensorflow.keras.layers import BatchNormalization, Conv3D, Activation
 
