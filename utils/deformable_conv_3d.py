@@ -6,7 +6,7 @@ class DCN3D(Conv3D):
     def __init__(
         self,
         num_outputs,
-        kernel_size=(3, 3, 3),
+        kernel_size=3,
         nb_batch=4,
         activation="relu",
         **kwargs

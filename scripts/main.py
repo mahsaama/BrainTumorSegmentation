@@ -10,7 +10,7 @@ from models.unet_model import UNet3D
 from models.gan_model import GAN
 from models.att_unet_model import AttUnet3D
 from models.att_gan_model import AttGAN
-from models.unet_deformconv_model import UNet3D_DCN
+from models.unet_dcn_model import UNet3D_DCN
 
 # define seeds to genetare predictable results
 random.seed(10)
