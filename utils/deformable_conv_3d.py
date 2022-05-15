@@ -79,7 +79,8 @@ class DCN3D(Conv3D):
             padding="VALID",
         )
 
-        outputs = Activation(self.activation)(outputs)
+        if self.activation != "":
+            outputs = Activation(self.activation)(outputs)
         return outputs
 
 

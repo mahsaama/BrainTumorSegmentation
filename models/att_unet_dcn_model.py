@@ -9,27 +9,20 @@ import time
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
     Input,
-    Dropout,
-    concatenate,
+    Conv3D,
+    Concatenate,
     MaxPooling3D,
     UpSampling3D,
+    BatchNormalization,
     Activation,
-    Conv3D,
+    Add,
+    Multiply,
 )
 from utils.deformable_conv_3d import DCN3D
 
 
-class UNet3D_DCN:
-    def __init__(
-        self,
-        batch_size,
-        patch_size,
-        n_classes,
-        class_weights,
-        path,
-        lr=2e-4,
-        beta_1=0.5,
-    ):
+class AttUnet3DDCN:
+    def __init__(self, batch_size, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.n_classes = n_classes
@@ -39,94 +32,86 @@ class UNet3D_DCN:
         self.model = self.build()
 
     def build(self):
+        def conv3d(layer_input, filters):
+            # d = Conv3D(filters, 3, padding="same")(layer_input)
+            d = DCN3D(filters, 3, self.batch_size, activation="")(layer_input)
+            d = BatchNormalization()(d)
+            d = Activation("relu")(d)
+
+            d = DCN3D(filters, 3, self.batch_size, activation="")(d)
+            # d = Conv3D(filters, 3, padding="same")(d)
+            d = BatchNormalization()(d)
+            d = Activation("relu")(d)
+
+            return d
+
+        def deconv3d(layer_input, filters):
+            u = UpSampling3D(2)(layer_input)
+            u = DCN3D(filters, 3, self.batch_size, activation="")(u)
+            # u = Conv3D(filters, 3, padding="same")(u)
+            u = BatchNormalization()(u)
+            u = Activation("relu")(u)
+
+            return u
+
+        def attention_block(F_g, F_l, F_int):
+            g = Conv3D(F_int, 1, padding="valid")(F_g)
+            g = BatchNormalization()(g)
+
+            x = Conv3D(F_int, 1, padding="valid")(F_l)
+            x = BatchNormalization()(x)
+
+            psi = Add()([g, x])
+            psi = Activation("relu")(psi)
+
+            psi = Conv3D(1, 1, padding="valid")(psi)
+            psi = BatchNormalization()(psi)
+            psi = Activation("sigmoid")(psi)
+
+            return Multiply()([F_l, psi])
+
         inputs = Input(
             (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
             name="input_image",
         )
-        # conv1 = Conv3D(
-        #     64, 3, activation="relu", padding="same", data_format="channels_last"
-        # )(inputs)
-        conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(inputs)
-        # conv1 = Conv3D(64, 3, activation="relu", padding="same")(conv1)
-        conv1 = DCN3D(64, 3, self.batch_size, activation="relu")(conv1)
-        pool1 = MaxPooling3D(pool_size=(2, 2, 2))(conv1)
 
-        # conv2 = Conv3D(128, 3, activation="relu", padding="same")(pool1)
-        conv2 = DCN3D(128, 3, self.batch_size, activation="relu")(pool1)
-        # conv2 = Conv3D(128, 3, activation="relu", padding="same")(conv2)
-        conv2 = DCN3D(128, 3, self.batch_size, activation="relu")(conv2)
-        pool2 = MaxPooling3D(pool_size=(2, 2, 2))(conv2)
+        conv1 = conv3d(inputs, 64)
+        pool1 = MaxPooling3D((2, 2, 2), (2, 2, 2))(conv1)
 
-        # conv3 = Conv3D(256, 3, activation="relu", padding="same")(pool2)
-        conv3 = DCN3D(256, 3, self.batch_size, activation="relu")(pool2)
-        # conv3 = Conv3D(256, 3, activation="relu", padding="same")(conv3)
-        conv3 = DCN3D(256, 3, self.batch_size, activation="relu")(conv3)
-        pool3 = MaxPooling3D(pool_size=(2, 2, 2))(conv3)
+        conv2 = conv3d(pool1, 128)
+        pool2 = MaxPooling3D((2, 2, 2), (2, 2, 2))(conv2)
 
-        # conv4 = Conv3D(512, 3, activation="relu", padding="same")(pool3)
-        conv4 = DCN3D(512, 3, self.batch_size, activation="relu")(pool3)
-        # conv4 = Conv3D(512, 3, activation="relu", padding="same")(conv4)
-        conv4 = DCN3D(512, 3, self.batch_size, activation="relu")(conv4)
-        drop4 = Dropout(0.5)(conv4)
-        pool4 = MaxPooling3D(pool_size=(2, 2, 2))(drop4)
+        conv3 = conv3d(pool2, 256)
+        pool3 = MaxPooling3D((2, 2, 2), (2, 2, 2))(conv3)
 
-        # conv5 = Conv3D(1024, 3, activation="relu", padding="same")(pool4)
-        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu")(pool4)
-        # conv5 = Conv3D(1024, 3, activation="relu", padding="same")(conv5)
-        conv5 = DCN3D(1024, 3, self.batch_size, activation="relu")(conv5)
-        drop5 = Dropout(0.5)(conv5)
+        conv4 = conv3d(pool3, 512)
+        pool4 = MaxPooling3D((2, 2, 2), (2, 2, 2))(conv4)
 
-        # up6 = Conv3D(512, 2, activation="relu", padding="same")(
-        #     UpSampling3D(size=(2, 2, 2))(drop5)
-        # )
-        up6 = DCN3D(512, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(drop5)
-        )
-        merge6 = concatenate([drop4, up6], axis=-1)
-        # conv6 = Conv3D(512, 3, activation="relu", padding="same")(merge6)
-        # conv6 = Conv3D(512, 3, activation="relu", padding="same")(conv6)
-        conv6 = DCN3D(512, 3, self.batch_size, activation="relu")(merge6)
-        conv6 = DCN3D(512, 3, self.batch_size, activation="relu")(conv6)
+        conv5 = conv3d(pool4, 1024)
 
-        # up7 = Conv3D(256, 2, activation="relu", padding="same")(
-        #     UpSampling3D(size=(2, 2, 2))(conv6)
-        # )
-        up7 = DCN3D(256, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv6)
-        )
-        merge7 = concatenate([conv3, up7], axis=-1)
-        # conv7 = Conv3D(256, 3, activation="relu", padding="same")(merge7)
-        # conv7 = Conv3D(256, 3, activation="relu", padding="same")(conv7)
-        conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(merge7)
-        conv7 = DCN3D(256, 3, self.batch_size, activation="relu")(conv7)
+        up6 = deconv3d(conv5, 512)
+        conv6 = attention_block(up6, conv4, 512)
+        up6 = Concatenate()([up6, conv6])
+        conv6 = conv3d(up6, 512)
 
-        # up8 = Conv3D(128, 2, activation="relu", padding="same")(
-        #     UpSampling3D(size=(2, 2, 2))(conv7)
-        # )
-        up8 = DCN3D(128, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv7)
-        )
-        merge8 = concatenate([conv2, up8], axis=-1)
-        # conv8 = Conv3D(128, 3, activation="relu", padding="same")(merge8)
-        # conv8 = Conv3D(128, 3, activation="relu", padding="same")(conv8)
-        conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(merge8)
-        conv8 = DCN3D(128, 3, self.batch_size, activation="relu")(conv8)
+        up7 = deconv3d(conv6, 256)
+        conv7 = attention_block(up7, conv3, 256)
+        up7 = Concatenate()([up7, conv7])
+        conv7 = conv3d(up7, 256)
 
-        # up9 = Conv3D(64, 2, activation="relu", padding="same")(
-        #     UpSampling3D(size=(2, 2, 2))(conv8)
-        # )
-        up9 = DCN3D(64, 2, self.batch_size, activation="relu")(
-            UpSampling3D(size=(2, 2, 2))(conv8)
-        )
-        merge9 = concatenate([conv1, up9], axis=-1)
-        # conv9 = Conv3D(64, 3, activation="relu", padding="same")(merge9)
-        # conv9 = Conv3D(64, 3, activation="relu", padding="same")(conv9)
-        # output = Conv3D(4, 1, activation="softmax")(conv9)
-        conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(merge9)
-        conv9 = DCN3D(64, 3, self.batch_size, activation="relu")(conv9)
+        up8 = deconv3d(conv7, 128)
+        conv8 = attention_block(up8, conv2, 128)
+        up8 = Concatenate()([up8, conv8])
+        conv8 = conv3d(up8, 128)
+
+        up9 = deconv3d(conv8, 64)
+        conv9 = attention_block(up9, conv1, 64)
+        up9 = Concatenate()([up9, conv9])
+        conv9 = conv3d(up9, 64)
+
         output = Conv3D(4, 1, activation="softmax")(conv9)
 
-        return Model(inputs=inputs, outputs=output, name="UnetDCN")
+        return Model(inputs=inputs, outputs=output, name="Attention_Unet")
 
     @tf.function
     def train_step(self, image, target):
@@ -224,7 +209,7 @@ class UNet3D_DCN:
             # save models
             print(" ")
             if epoch_dice_loss_val.result() < prev_loss:
-                self.model.save_weights(self.path + "/UNET_DCN.h5")
+                self.model.save_weights(self.path + "/att_UNET_DCN.h5")
                 print(
                     "Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(
                         prev_loss, epoch_dice_loss_val.result()
