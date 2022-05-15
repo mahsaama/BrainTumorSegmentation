@@ -111,9 +111,13 @@ python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 10
 
 For running **UNet3D_DCN** model use this:
 ```bash
-python -m scripts.main -bs 4 -ps 128 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 1 -aug 1 -m unet_dc
+python -m scripts.main -bs 4 -ps 16 -a 5 -ne 1 -ef 0.25 -lr 1e-3 -b1 0.9 -ds 100 -np 1 -aug 1 -m unet_dc
 ```
 
+For running **AttUnet3DDCN** model use this:
+```bash
+python -m scripts.main -bs 4 -ps 16 -a 5 -ne 5 -ef 0.25 -lr 1e-3 -b1 0.9 -np 1 -aug 1 -m att_unet_dc
+```
 References
 ---------------------------------------------------
 - [Vox2Vox: 3D-GAN for Brain Tumour Segmentation](https://github.com/mdciri/Vox2Vox)
