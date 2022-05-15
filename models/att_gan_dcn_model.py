@@ -59,7 +59,7 @@ class AttGANDCN:
             return Multiply()([F_l, psi])
         
         def encoder_step(layer, Nf, ks, norm=True):
-            x = DCN3D(Nf, ks, self.batch_size, activation="", strides=2, kernel_initializer="he_normal")(layer)
+            x = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -75,7 +75,7 @@ class AttGANDCN:
             return x
 
         def bottlenek(layer, Nf, ks):
-            x = DCN3D(Nf, ks, self.batch_size, activation="", strides=2, kernel_initializer="he_normal")(layer)
+            x = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -104,7 +104,8 @@ class AttGANDCN:
             x = Conv3DTranspose(
                 Nf,
                 kernel_size=ks,
-                strides=2,
+                strides=1,
+                # strides=2,
                 padding="same",
                 kernel_initializer="he_normal",
             )(layer)
@@ -140,7 +141,8 @@ class AttGANDCN:
         outputs = Conv3DTranspose(
             4,
             kernel_size=ks,
-            strides=2,
+            strides=1,
+            # strides=2,
             padding="same",
             kernel_initializer="he_normal",
             activation="softmax",
