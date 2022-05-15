@@ -59,7 +59,7 @@ class AttGANDCN:
             return Multiply()([F_l, psi])
         
         def encoder_step(layer, Nf, ks, norm=True):
-            x = DCN3D(Nf, ks, self.batch_size, activation="")(layer)
+            x = DCN3D(Nf, ks, self.batch_size, activation="", strides=2, kernel_initializer="he_normal")(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -75,7 +75,7 @@ class AttGANDCN:
             return x
 
         def bottlenek(layer, Nf, ks):
-            x = DCN3D(Nf, ks, self.batch_size, activation="")(layer)
+            x = DCN3D(Nf, ks, self.batch_size, activation="", strides=2, kernel_initializer="he_normal")(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -86,7 +86,7 @@ class AttGANDCN:
             x = InstanceNormalization()(x)
             x = LeakyReLU()(x)
             for i in range(4):
-                y = DCN3D(Nf, ks, self.batch_size, activation="")(x)
+                y = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(x)
                 # y = Conv3D(
                 #     Nf,
                 #     kernel_size=ks,

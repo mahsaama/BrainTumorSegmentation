@@ -4,7 +4,7 @@ from tensorflow.keras.layers import BatchNormalization, Conv3D, Activation
 
 class DCN3D(Conv3D):
     def __init__(
-        self, num_outputs, kernel_size=3, nb_batch=4, activation="relu", **kwargs
+        self, num_outputs, kernel_size=3, nb_batch=4, activation="relu", strides=(1, 1, 1), kernel_initializer="zeros", **kwargs
     ):
         """Init"""
 
@@ -16,10 +16,11 @@ class DCN3D(Conv3D):
         super(DCN3D, self).__init__(
             self.kernel_size[0] * self.kernel_size[1] * self.kernel_size[2] * 3,
             self.kernel_size,
+            strides=strides,
             padding="same",
             use_bias=False,
             # TODO gradients are near zero if init is zeros
-            kernel_initializer="zeros",
+            kernel_initializer=kernel_initializer,
             **kwargs
         )
 
