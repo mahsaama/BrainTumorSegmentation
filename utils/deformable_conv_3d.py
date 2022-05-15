@@ -47,10 +47,10 @@ class DCN3D(Conv3D):
         # generate deformed feature
         input_shape = [
             self.nb_batch,
-            x.shape[1],
-            x.shape[2],
-            x.shape[3],
-            x.shape[4],
+            offsets.shape[1],
+            offsets.shape[2],
+            offsets.shape[3],
+            offsets.shape[4],
         ]
 
         dcn = DCN(input_shape, self.kernel_size)
