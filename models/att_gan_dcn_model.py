@@ -165,7 +165,8 @@ class AttGANDCN:
             x = Conv3D(
                 Nf,
                 kernel_size=ks,
-                strides=2,
+                strides=1,
+                # strides=2,
                 kernel_initializer="he_normal",
                 padding="same",
             )(layer)
