@@ -12,6 +12,7 @@ from models.att_unet_model import AttUnet3D
 from models.att_gan_model import AttGAN
 from models.unet_dcn_model import UNet3D_DCN
 from models.att_unet_dcn_model import AttUnet3DDCN
+from models.att_gan_dcn_model import AttGANDCN
 
 # define seeds to genetare predictable results
 random.seed(10)
@@ -162,3 +163,11 @@ if model == "att_unet_dc":
         batch_size, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = att_unet_dc.train(train_gen, valid_gen, n_epochs)
+    
+if model == "att_gan_dc":
+    # train the attention gan model with deformable convolution
+    path = os.path.join(".", "RESULTS", model)
+    att_gan_dc = AttGANDCN(
+        batch_size, patch_size, n_classes, class_weights, path, lr, beta_1
+    )
+    history = att_gan_dc.train(train_gen, valid_gen, n_epochs)
