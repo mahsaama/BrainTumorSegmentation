@@ -152,7 +152,7 @@ if model == "unet_dc":
     # train the unet model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     unet_dc = UNet3D_DCN(
-        batch_size, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = unet_dc.train(train_gen, valid_gen, n_epochs)
 
