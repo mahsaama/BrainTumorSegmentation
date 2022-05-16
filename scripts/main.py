@@ -160,7 +160,7 @@ if model == "att_unet_dc":
     # train the attention unet model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     att_unet_dc = AttUnet3DDCN(
-        batch_size, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = att_unet_dc.train(train_gen, valid_gen, n_epochs)
     
@@ -168,6 +168,6 @@ if model == "att_gan_dc":
     # train the attention gan model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     att_gan_dc = AttGANDCN(
-        batch_size, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = att_gan_dc.train(train_gen, valid_gen, n_epochs)
