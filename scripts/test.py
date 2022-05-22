@@ -107,30 +107,30 @@ if model == "unet":
     # train the unet model
     path = os.path.join(".", "RESULTS", model)
     unet = UNet3D(patch_size, n_classes, class_weights, path, lr, beta_1)
-    unet.load_weights(path + "/" + model + "/UNET.h5")
+    unet.load_weights(path + "/UNET.h5")
     unet.predict(test_gen)
 
 elif model == "att_unet":
     # train the attention unet model
     path = os.path.join(".", "RESULTS", model)
     att_unet = AttUnet3D(patch_size, n_classes, class_weights, path, lr, beta_1)
-    att_unet.load_weights(path + "/" + model + "/Att_UNET.h5")
+    att_unet.load_weights(path + "/Att_UNET.h5")
     att_unet.predict(test_gen)
 
 elif model == "gan":
     # train the vox2vox model
     path = os.path.join(".", "RESULTS", model)
     gan = GAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
-    gan.G.load_weights(path + "/" + model + "/Generator.h5")
-    gan.D.load_weights(path + "/" + model + "/Discriminator.h5")
+    gan.G.load_weights(path + "/Generator.h5")
+    gan.D.load_weights(path + "/Discriminator.h5")
     gan.predict(test_gen)
 
 elif model == "att_gan":
     # train the vox2vox model with attention in generator
     path = os.path.join(".", "RESULTS", model)
     att_gan = AttGAN(patch_size, n_classes, class_weights, path, lr, beta_1, alpha)
-    att_gan.G.load_weights(path + "/" + model + "/Generator.h5")
-    att_gan.D.load_weights(path + "/" + model + "/Discriminator.h5")
+    att_gan.G.load_weights(path + "/Generator.h5")
+    att_gan.D.load_weights(path + "/Discriminator.h5")
     att_gan.predict(test_gen)
     
 if model == "unet_dc":
@@ -139,7 +139,7 @@ if model == "unet_dc":
     unet_dc = UNet3D_DCN(
         batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
-    unet_dc.load_weights(path + "/" + model + "/UNET_DCN.h5")
+    unet_dc.load_weights(path + "/UNET_DCN.h5")
     unet_dc.predict(test_gen)
 
 if model == "att_unet_dc":
@@ -148,7 +148,7 @@ if model == "att_unet_dc":
     att_unet_dc = AttUnet3DDCN(
         batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
-    att_unet_dc.load_weights(path + "/" + model + "/att_UNET_DCN.h5")
+    att_unet_dc.load_weights(path + "/att_UNET_DCN.h5")
     att_unet_dc.predict(test_gen)
 
 if model == "att_gan_dc":
@@ -157,6 +157,6 @@ if model == "att_gan_dc":
     att_gan_dc = AttGANDCN(
         batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
-    att_gan_dc.G.load_weights(path + "/" +"Generator.h5")
-    att_gan_dc.D.load_weights(path + "/" +"Discriminator.h5")
+    att_gan_dc.G.load_weights(path +"/Generator.h5")
+    att_gan_dc.D.load_weights(path +"/Discriminator.h5")
     att_gan_dc.predict(test_gen)
