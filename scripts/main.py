@@ -62,7 +62,7 @@ eval_frac = args.eval_frac
 model = args.model
 lr = args.learning_rate
 beta_1 = args.beta_1
-ds = args.data_size
+ds = args.dataset
 num_patches = args.num_patch
 aug = True if args.augmentation == 1 else False
 
