@@ -333,7 +333,9 @@ class AttGANDCN:
     
     def predict(self, test_gen):
         start = time.time()
-        for i, Xb, yb in enumerate(test_gen):
+        i = 0
+        for Xb, yb in test_gen:
+            i += 1
             dice_loss, dice_acc = self.test_step(Xb, yb)
             # save pred image at epoch e
             y_pred = self.G.predict(Xb)
@@ -355,7 +357,7 @@ class AttGANDCN:
                 y_pred[idx, :, :, patch_size // 2] / 3
             )
 
-            fname = (self.path + "/test_{:03d}.png").format(i + 1)
+            fname = (self.path + "/test_{:03d}.png").format(i)
             mpim.imsave(fname, canvas, cmap="gray")
 
             del Xb, yb, canvas, y_pred, y_true, idx
