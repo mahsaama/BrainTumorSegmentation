@@ -228,7 +228,7 @@ class UNet3D:
                 y_pred[idx, :, :, patch_size // 2] / 3
             )
 
-            fname = (self.path + "/test_{:03d}.png").format(i + 1)
+            fname = (self.path + "/test_{:03d}.png").format(i)
             mpim.imsave(fname, canvas, cmap="gray")
 
             del Xb, yb, canvas, y_pred, y_true, idx

@@ -126,7 +126,6 @@ class DataGenerator(tf.keras.utils.Sequence):
             X_aug, y_aug = patch_extraction(
                 X, y, sizePatches=self.patch_size, Npatches=self.n_patches
             )
-            print(X_aug.shape)
             return X_aug.astype("float32"), to_categorical(y_aug, self.n_classes)
 
     def __data_augmentation(self, X, y):
