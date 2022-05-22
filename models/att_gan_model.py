@@ -324,8 +324,10 @@ class AttGAN:
     
     def predict(self, test_gen):
         start = time.time()
-        for i, Xb, yb in enumerate(test_gen):
-            dice_loss, dice_acc = self.test_step(Xb, yb)
+        i = 0
+        for Xb, yb in test_gen:
+            i += 1
+            gen_loss, dice_loss, disc_loss_gen, dice_acc = self.test_step(Xb, yb)
             # save pred image at epoch e
             y_pred = self.G.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
@@ -350,4 +352,5 @@ class AttGAN:
             mpim.imsave(fname, canvas, cmap="gray")
 
             del Xb, yb, canvas, y_pred, y_true, idx
-        print("Time: {}\n Dice Accuracy: {}\n".format(sec_to_minute(time.time() - start), dice_acc))
+            print("Dice Accuracy: {}".format(dice_acc))
+        print("Time: {}".format(sec_to_minute(time.time() - start)))

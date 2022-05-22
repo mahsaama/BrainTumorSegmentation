@@ -204,7 +204,9 @@ class UNet3D:
     
     def predict(self, test_gen):
         start = time.time()
-        for i, Xb, yb in enumerate(test_gen):
+        i = 0
+        for Xb, yb in test_gen:
+            i += 1
             dice_loss, dice_acc = self.test_step(Xb, yb)
             # save pred image at epoch e
             y_pred = self.model.predict(Xb)
@@ -230,4 +232,5 @@ class UNet3D:
             mpim.imsave(fname, canvas, cmap="gray")
 
             del Xb, yb, canvas, y_pred, y_true, idx
-        print("Time: {}\n Dice Accuracy: {}\n".format(sec_to_minute(time.time() - start), dice_acc))
+            print("Dice Accuracy: {}".format(dice_acc))
+        print("Time: {}".format(sec_to_minute(time.time() - start)))
