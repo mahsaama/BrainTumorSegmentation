@@ -79,11 +79,17 @@ class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f"
 # show_folder_images("../Dataset_BRATS_2020/Validation/BraTS20_Validation_001/")
 
 # images lists
-t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))[:ds]
-t2_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t2.nii.gz"))[:ds]
-t1ce_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1ce.nii.gz"))[:ds]
-flair_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*flair.nii.gz"))[:ds]
-seg_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*seg.nii.gz"))[:ds]
+t1_list = sorted(glob.glob("../Dataset_BRATS_2021/*/*t1.nii.gz"))
+t2_list = sorted(glob.glob("../Dataset_BRATS_2021/*/*t2.nii.gz"))
+t1ce_list = sorted(glob.glob("../Dataset_BRATS_2021/*/*t1ce.nii.gz"))
+flair_list = sorted(glob.glob("../Dataset_BRATS_2021/*/*flair.nii.gz"))
+seg_list = sorted(glob.glob("../Dataset_BRATS_2021/*/*seg.nii.gz"))
+# # images lists
+# t1_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1.nii.gz"))[:ds]
+# t2_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t2.nii.gz"))[:ds]
+# t1ce_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*t1ce.nii.gz"))[:ds]
+# flair_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*flair.nii.gz"))[:ds]
+# seg_list = sorted(glob.glob("../Dataset_BRATS_2020/Training/*/*seg.nii.gz"))[:ds]
 
 # create the training and validation sets
 n_data = len(t1_list)
