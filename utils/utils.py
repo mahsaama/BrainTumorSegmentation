@@ -123,7 +123,6 @@ class DataGenerator(tf.keras.utils.Sequence):
         if self.augmentation == True:
             return X.astype("float32"), y
         else:
-            print(X.shape, y.shape)
             X_aug, y_aug = patch_extraction(
                 X, y, sizePatches=self.patch_size, Npatches=self.n_patches
             )
