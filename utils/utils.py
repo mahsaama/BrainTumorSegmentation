@@ -123,7 +123,10 @@ class DataGenerator(tf.keras.utils.Sequence):
         if self.augmentation == True:
             return X.astype("float32"), y
         else:
-            return X.astype("float32"), to_categorical(y, self.n_classes)
+            X_aug, y_aug = patch_extraction(
+                X, y, sizePatches=self.patch_size, Npatches=self.n_patches
+            )
+            return X_aug.astype("float32"), to_categorical(y_aug, self.n_classes)
 
     def __data_augmentation(self, X, y):
         "Apply augmentation"
