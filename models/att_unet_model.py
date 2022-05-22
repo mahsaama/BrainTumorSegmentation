@@ -204,7 +204,7 @@ class AttUnet3D:
             # save models
             print(" ")
             if epoch_dice_loss_val.result() < prev_loss:
-                self.model.save_weights(self.path + "/UNET.h5")
+                self.model.save_weights(self.path + "/Att_UNET.h5")
                 print(
                     "Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(
                         prev_loss, epoch_dice_loss_val.result()
