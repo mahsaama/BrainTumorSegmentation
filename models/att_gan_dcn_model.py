@@ -361,4 +361,5 @@ class AttGANDCN:
             mpim.imsave(fname, canvas, cmap="gray")
 
             del Xb, yb, canvas, y_pred, y_true, idx
-        print("Time: {}\n Dice Accuracy: {}\n".format(sec_to_minute(time.time() - start), dice_acc))
+            print("Dice Accuracy: {}".format(dice_acc))
+        print("Time: {}".format(sec_to_minute(time.time() - start)))
