@@ -336,7 +336,7 @@ class AttGANDCN:
         i = 0
         for Xb, yb in test_gen:
             i += 1
-            dice_loss, dice_acc = self.test_step(Xb, yb)
+            gen_loss, dice_loss, disc_loss_gen, dice_acc = self.test_step(Xb, yb)
             # save pred image at epoch e
             y_pred = self.G.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
