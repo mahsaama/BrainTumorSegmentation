@@ -157,8 +157,8 @@ if model == "att_gan_dc":
     att_gan_dc = AttGANDCN(
         batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
-    os.chdir(path + "/" + model + "/")
-    att_gan_dc.G.load_weights("Generator.h5")
-    att_gan_dc.D.load_weights("Discriminator.h5")
-    os.chdir("../../")
+    # os.chdir(path + "/" + model + "/")
+    att_gan_dc.G.load_weights(path + "/" +"Generator.h5")
+    att_gan_dc.D.load_weights(path + "/" +"Discriminator.h5")
+    # os.chdir("../../")
     att_gan_dc.predict(test_gen)
