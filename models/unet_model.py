@@ -93,7 +93,7 @@ class UNet3D:
         with tf.GradientTape() as tape:
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
-            cce_loss = self.loss(target, output, sample_weight=self.class_weights)
+            cce_loss = self.loss(target, output, sample_weight=self.class_weights, axis=0)
 
         gradients = tape.gradient(cce_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
@@ -105,7 +105,7 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        cce_loss = self.loss(target, output, sample_weight=self.class_weights)
+        cce_loss = self.loss(target, output, sample_weight=self.class_weights, axis=0)
         return dice_loss, dice_percent, cce_loss
 
     def train(self, train_gen, valid_gen, epochs):
