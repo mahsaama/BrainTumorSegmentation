@@ -68,6 +68,9 @@ aug = True if args.augmentation == 1 else False
 
 classes = np.arange(n_classes)
 
+# class weights
+class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f")
+
 if ds == 2020:
     p = "../Dataset_BRATS_2020/Training/"
 elif ds == 2021:
