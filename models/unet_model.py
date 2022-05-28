@@ -98,6 +98,7 @@ class UNet3D:
         gradients = tape.gradient(cce_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
+        print(dice_loss, dice_percent, cce_loss)
         return dice_loss, dice_percent, cce_loss
 
     @tf.function
@@ -146,7 +147,11 @@ class UNet3D:
                 )
                 stdout.flush()
             history["train"].append(
-                [epoch_dice_loss.result(), epoch_dice_loss_percent.result(), epoch_cce_loss.result()]
+                [
+                    epoch_dice_loss.result(),
+                    epoch_dice_loss_percent.result(),
+                    epoch_cce_loss.result(),
+                ]
             )
 
             for Xb, yb in valid_gen:
@@ -157,12 +162,18 @@ class UNet3D:
 
             stdout.write(
                 "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - cce_loss_val: {:.4f}".format(
-                    epoch_dice_loss_val.result(), epoch_dice_loss_percent_val.result(), epoch_cce_loss_val.result(),
+                    epoch_dice_loss_val.result(),
+                    epoch_dice_loss_percent_val.result(),
+                    epoch_cce_loss_val.result(),
                 )
             )
             stdout.flush()
             history["valid"].append(
-                [epoch_dice_loss_val.result(), epoch_dice_loss_percent_val.result(), epoch_cce_loss_val.result()]
+                [
+                    epoch_dice_loss_val.result(),
+                    epoch_dice_loss_percent_val.result(),
+                    epoch_cce_loss_val.result(),
+                ]
             )
 
             # save pred image at epoch e
@@ -212,7 +223,7 @@ class UNet3D:
             del Xb, yb, canvas, y_pred, y_true, idx
             print("Time: {}\n".format(sec_to_minute(time.time() - start)))
         return history
-    
+
     def predict(self, test_gen):
         start = time.time()
         i = 0
