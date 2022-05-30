@@ -41,9 +41,7 @@ parser.add_argument(
 parser.add_argument(
     "-b1", "--beta_1", default=0.9, type=float, help="beta1 for momentum"
 )
-parser.add_argument(
-    "-ds", "--dataset", default=2020, type=int, help="Dataset to use"
-)
+parser.add_argument("-ds", "--dataset", default=2020, type=int, help="Dataset to use")
 parser.add_argument("-np", "--num_patch", default=1, type=int, help="number of patches")
 parser.add_argument(
     "-aug",
@@ -74,13 +72,13 @@ if ds == 2020:
     p = "../Dataset_BRATS_2020/Training/"
 elif ds == 2021:
     p = "../Dataset_BRATS_2021/"
-    
+
 # images lists
-t1_list = sorted(glob.glob(p+"*/*t1.nii.gz"))[:100]
-t2_list = sorted(glob.glob(p+"*/*t2.nii.gz"))[:100]
-t1ce_list = sorted(glob.glob(p+"*/*t1ce.nii.gz"))[:100]
-flair_list = sorted(glob.glob(p+"*/*flair.nii.gz"))[:100]
-seg_list = sorted(glob.glob(p+"*/*seg.nii.gz"))[:100]
+t1_list = sorted(glob.glob(p + "*/*t1.nii.gz"))
+t2_list = sorted(glob.glob(p + "*/*t2.nii.gz"))
+t1ce_list = sorted(glob.glob(p + "*/*t1ce.nii.gz"))
+flair_list = sorted(glob.glob(p + "*/*flair.nii.gz"))
+seg_list = sorted(glob.glob(p + "*/*seg.nii.gz"))
 
 
 # create the training and validation sets
@@ -150,7 +148,7 @@ if model == "unet_dc":
     # train the unet model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     unet_dc = UNet3D_DCN(
-        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = unet_dc.train(train_gen, valid_gen, n_epochs)
 
@@ -158,14 +156,14 @@ if model == "att_unet_dc":
     # train the attention unet model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     att_unet_dc = AttUnet3DDCN(
-        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = att_unet_dc.train(train_gen, valid_gen, n_epochs)
-    
+
 if model == "att_gan_dc":
     # train the attention gan model with deformable convolution
     path = os.path.join(".", "RESULTS", model)
     att_gan_dc = AttGANDCN(
-        batch_size*num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
+        batch_size * num_patches, patch_size, n_classes, class_weights, path, lr, beta_1
     )
     history = att_gan_dc.train(train_gen, valid_gen, n_epochs)
