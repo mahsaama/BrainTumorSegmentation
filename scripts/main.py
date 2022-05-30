@@ -78,11 +78,11 @@ elif ds == 2021:
     p = "../Dataset_BRATS_2021/"
     
 # images lists
-t1_list = sorted(glob.glob(p+"*/*t1.nii.gz"))[:100]
-t2_list = sorted(glob.glob(p+"*/*t2.nii.gz"))[:100]
-t1ce_list = sorted(glob.glob(p+"*/*t1ce.nii.gz"))[:100]
-flair_list = sorted(glob.glob(p+"*/*flair.nii.gz"))[:100]
-seg_list = sorted(glob.glob(p+"*/*seg.nii.gz"))[:100]
+t1_list = sorted(glob.glob(p+"*/*t1.nii.gz"))[:10]
+t2_list = sorted(glob.glob(p+"*/*t2.nii.gz"))[:10]
+t1ce_list = sorted(glob.glob(p+"*/*t1ce.nii.gz"))[:10]
+flair_list = sorted(glob.glob(p+"*/*flair.nii.gz"))[:10]
+seg_list = sorted(glob.glob(p+"*/*seg.nii.gz"))[:10]
 
 
 # create the training and validation sets
