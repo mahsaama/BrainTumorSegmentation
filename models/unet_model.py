@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-from utils.losses import diceLoss
+from utils.losses import diceLoss, per_class_dice
 from utils.utils import sec_to_minute
 import matplotlib.image as mpim
 from sys import stdout
@@ -92,18 +92,20 @@ class UNet3D:
         with tf.GradientTape() as tape:
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
-
+            per_class_dice = per_class_dice(target, output, self.class_weights)
+            
         gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent
+        return dice_loss, dice_percent, per_class_dice
 
     @tf.function
     def test_step(self, image, target):
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent
+        per_class_dice = per_class_dice(target, output, self.class_weights)
+        return dice_loss, dice_percent, per_class_dice
 
     def train(self, train_gen, valid_gen, epochs):
 
@@ -130,11 +132,14 @@ class UNet3D:
                 epoch_dice_loss_percent.update_state(losses[1])
 
                 stdout.write(
-                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% ".format(
+                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
                         b,
                         Nt,
                         epoch_dice_loss.result(),
                         epoch_dice_loss_percent.result(),
+                        losses[3][0],
+                        losses[3][1],
+                        losses[3][2],
                     )
                 )
                 stdout.flush()
@@ -149,13 +154,16 @@ class UNet3D:
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
-                stdout.write(
-                    "dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
-                        epoch_dice_loss_val.result(),
-                        epoch_dice_loss_percent_val.result(),
-                    )
+            stdout.write(
+                "\n\tdice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
+                    epoch_dice_loss_val.result(),
+                    epoch_dice_loss_percent_val.result(),
+                    losses_val[3][0],
+                    losses_val[3][1],
+                    losses_val[3][2],
                 )
-                stdout.flush()
+            )
+            stdout.flush()
             history["valid"].append(
                 [
                     epoch_dice_loss_val.result(),
