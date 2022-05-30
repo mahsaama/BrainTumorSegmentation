@@ -144,11 +144,11 @@ class UNet3D:
                     epoch_dice_loss_percent.result(),
                 ]
             )
-            conf_metrix = None
             for Xb, yb in valid_gen:
                 losses_val, conf_metrix = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
+                print(conf_metrix)
 
             stdout.write(
                 "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
@@ -157,7 +157,6 @@ class UNet3D:
                 )
             )
             stdout.flush()
-            print(conf_metrix)
             history["valid"].append(
                 [
                     epoch_dice_loss_val.result(),
