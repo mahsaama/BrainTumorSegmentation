@@ -148,7 +148,7 @@ class UNet3D:
                 losses_val, conf_metrix = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
-                print(conf_metrix)
+                conf_metrix.to_csv(self.path + "/conf.csv")
 
             stdout.write(
                 "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
