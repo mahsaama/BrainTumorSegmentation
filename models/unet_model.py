@@ -166,8 +166,11 @@ class UNet3D:
 
             # save pred image at epoch e
             y_pred = self.model.predict(Xb)
+            print(y_pred.shape)
             y_true = np.argmax(yb, axis=-1)
+            print(y_true.shape)
             y_pred = np.argmax(y_pred, axis=-1)
+            print(y_pred.shape)
             print(classification_report(y_true, y_pred))
 
             patch_size = valid_gen.patch_size
