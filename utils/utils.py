@@ -60,14 +60,14 @@ class DataGenerator(tf.keras.utils.Sequence):
     def __init__(
         self,
         list_IDs,
-        batch_size=1,
+        batch_size=4,
         dim=(160, 192, 128),
         n_channels=4,
         n_classes=4,
         shuffle=True,
         augmentation=False,
-        patch_size=32,
-        n_patches=120,
+        patch_size=128,
+        n_patches=1,
     ):
         "Initialization"
         self.list_IDs = list_IDs
