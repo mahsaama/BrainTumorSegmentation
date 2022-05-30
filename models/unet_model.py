@@ -15,7 +15,7 @@ from tensorflow.keras.layers import (
     MaxPooling3D,
     UpSampling3D,
 )
-from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, classification_report
+from sklearn.metrics import confusion_matrix, classification_report
 
 class UNet3D:
     def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
@@ -102,8 +102,8 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        conf_metrix = classification_report(tf.math.argmax(target, axis=-1), tf.math.argmax(output, axis=-1))
-        print(conf_metrix)
+        # conf_metrix = classification_report(tf.math.argmax(target, axis=-1), tf.math.argmax(output, axis=-1))
+        # print(conf_metrix)
         return dice_loss, dice_percent
 
     def train(self, train_gen, valid_gen, epochs):
@@ -169,6 +169,7 @@ class UNet3D:
             y_pred = self.model.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
+            print(confusion_matrix(y_true, y_pred))
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
