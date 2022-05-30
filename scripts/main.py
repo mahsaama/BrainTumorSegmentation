@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import os
 import random
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 from utils.utils import DataGenerator
@@ -17,7 +18,7 @@ from models.att_gan_dcn_model import AttGANDCN
 # define seeds to genetare predictable results
 random.seed(10)
 np.random.seed(10)
-
+tf.random.set_seed(10)
 
 parser = argparse.ArgumentParser("BTS Training and validation", add_help=False)
 
@@ -77,11 +78,11 @@ elif ds == 2021:
     p = "../Dataset_BRATS_2021/"
     
 # images lists
-t1_list = sorted(glob.glob(p+"*/*t1.nii.gz"))
-t2_list = sorted(glob.glob(p+"*/*t2.nii.gz"))
-t1ce_list = sorted(glob.glob(p+"*/*t1ce.nii.gz"))
-flair_list = sorted(glob.glob(p+"*/*flair.nii.gz"))
-seg_list = sorted(glob.glob(p+"*/*seg.nii.gz"))
+t1_list = sorted(glob.glob(p+"*/*t1.nii.gz"))[:100]
+t2_list = sorted(glob.glob(p+"*/*t2.nii.gz"))[:100]
+t1ce_list = sorted(glob.glob(p+"*/*t1ce.nii.gz"))[:100]
+flair_list = sorted(glob.glob(p+"*/*flair.nii.gz"))[:100]
+seg_list = sorted(glob.glob(p+"*/*seg.nii.gz"))[:100]
 
 
 # create the training and validation sets

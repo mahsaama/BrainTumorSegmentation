@@ -102,7 +102,7 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        conf_metrix = confusion_matrix(target.argmax(axis=-1), output.argmax(axis=-1))
+        conf_metrix = confusion_matrix(np.argmax(target, axis=-1), np.argmax(output, axis=-1))
         return dice_loss, dice_percent, conf_metrix
 
     def train(self, train_gen, valid_gen, epochs):
