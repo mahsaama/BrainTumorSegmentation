@@ -137,9 +137,9 @@ class UNet3D:
                         Nt,
                         epoch_dice_loss.result(),
                         epoch_dice_loss_percent.result(),
-                        losses[3][0],
-                        losses[3][1],
-                        losses[3][2],
+                        losses[2][0],
+                        losses[2][1],
+                        losses[2][2],
                     )
                 )
                 stdout.flush()
@@ -158,9 +158,9 @@ class UNet3D:
                 "\n\tdice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
                     epoch_dice_loss_val.result(),
                     epoch_dice_loss_percent_val.result(),
-                    losses_val[3][0],
-                    losses_val[3][1],
-                    losses_val[3][2],
+                    losses_val[2][0],
+                    losses_val[2][1],
+                    losses_val[2][2],
                 )
             )
             stdout.flush()
