@@ -15,7 +15,6 @@ from tensorflow.keras.layers import (
     MaxPooling3D,
     UpSampling3D,
 )
-import sklearn.metrics as metrics
 
 
 class UNet3D:
@@ -25,7 +24,6 @@ class UNet3D:
         self.class_weights = class_weights
         self.optimizer = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=beta_1)
         self.path = path
-        self.loss = tf.keras.losses.CategoricalCrossentropy(axis=0)
         self.model = self.build()
 
     def build(self):
@@ -93,20 +91,18 @@ class UNet3D:
         with tf.GradientTape() as tape:
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
-            cce_loss = self.loss(target, output)
 
-        gradients = tape.gradient(cce_loss, self.model.trainable_variables)
+        gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent, cce_loss
+        return dice_loss, dice_percent
 
     @tf.function
     def test_step(self, image, target):
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        cce_loss = self.loss(target, output)
-        return dice_loss, dice_percent, cce_loss
+        return dice_loss, dice_percent
 
     def train(self, train_gen, valid_gen, epochs):
 
@@ -119,10 +115,8 @@ class UNet3D:
 
         epoch_dice_loss = tf.keras.metrics.Mean()
         epoch_dice_loss_percent = tf.keras.metrics.Mean()
-        epoch_cce_loss = tf.keras.metrics.Mean()
         epoch_dice_loss_val = tf.keras.metrics.Mean()
         epoch_dice_loss_percent_val = tf.keras.metrics.Mean()
-        epoch_cce_loss_val = tf.keras.metrics.Mean()
 
         for e in range(epochs):
             print("Epoch {}/{}".format(e + 1, epochs))
@@ -133,15 +127,13 @@ class UNet3D:
                 losses = self.train_step(Xb, yb)
                 epoch_dice_loss.update_state(losses[0])
                 epoch_dice_loss_percent.update_state(losses[1])
-                epoch_cce_loss.update_state(losses[2])
 
                 stdout.write(
-                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% - cce_loss: {:.4f}".format(
+                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% ".format(
                         b,
                         Nt,
                         epoch_dice_loss.result(),
                         epoch_dice_loss_percent.result(),
-                        epoch_cce_loss.result(),
                     )
                 )
                 stdout.flush()
@@ -149,7 +141,6 @@ class UNet3D:
                 [
                     epoch_dice_loss.result(),
                     epoch_dice_loss_percent.result(),
-                    epoch_cce_loss.result(),
                 ]
             )
 
@@ -157,13 +148,11 @@ class UNet3D:
                 losses_val = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
-                epoch_cce_loss_val.update_state(losses_val[2])
 
             stdout.write(
-                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - cce_loss_val: {:.4f}".format(
+                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
                     epoch_dice_loss_val.result(),
                     epoch_dice_loss_percent_val.result(),
-                    epoch_cce_loss_val.result(),
                 )
             )
             stdout.flush()
@@ -171,7 +160,6 @@ class UNet3D:
                 [
                     epoch_dice_loss_val.result(),
                     epoch_dice_loss_percent_val.result(),
-                    epoch_cce_loss_val.result(),
                 ]
             )
 
@@ -200,24 +188,22 @@ class UNet3D:
 
             # save models
             print(" ")
-            if epoch_cce_loss_val.result() < prev_loss:
+            if epoch_dice_loss_val.result() < prev_loss:
                 self.model.save_weights(self.path + "/UNET.h5")
                 print(
                     "Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(
-                        prev_loss, epoch_cce_loss_val.result()
+                        prev_loss, epoch_dice_loss_val.result()
                     )
                 )
-                prev_loss = epoch_cce_loss_val.result()
+                prev_loss = epoch_dice_loss_val.result()
             else:
                 print("Validation loss did not decrese from {:.4f}.".format(prev_loss))
 
             # resets losses states
             epoch_dice_loss.reset_states()
             epoch_dice_loss_percent.reset_states()
-            epoch_cce_loss.reset_states()
             epoch_dice_loss_val.reset_states()
             epoch_dice_loss_percent_val.reset_states()
-            epoch_cce_loss_val.reset_states()
 
             del Xb, yb, canvas, y_pred, y_true, idx
             print("Time: {}\n".format(sec_to_minute(time.time() - start)))
