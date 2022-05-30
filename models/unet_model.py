@@ -168,7 +168,7 @@ class UNet3D:
             y_pred = self.model.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
-            print(confusion_matrix(y_true.flatten(), y_pred.flatten()))
+            print(classification_report(y_true.flatten(), y_pred.flatten()))
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
