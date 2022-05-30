@@ -15,7 +15,7 @@ from tensorflow.keras.layers import (
     MaxPooling3D,
     UpSampling3D,
 )
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score, classification_report
 
 class UNet3D:
     def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
@@ -102,8 +102,9 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        conf_metrix = confusion_matrix(tf.math.argmax(target, axis=-1), tf.math.argmax(output, axis=-1))
-        return dice_loss, dice_percent, conf_metrix
+        conf_metrix = classification_report(tf.math.argmax(target, axis=-1), tf.math.argmax(output, axis=-1))
+        print(conf_metrix)
+        return dice_loss, dice_percent
 
     def train(self, train_gen, valid_gen, epochs):
 
@@ -145,10 +146,10 @@ class UNet3D:
                 ]
             )
             for Xb, yb in valid_gen:
-                losses_val, conf_metrix = self.test_step(Xb, yb)
+                losses_val = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
-                conf_metrix.to_csv(self.path + "/conf.csv")
+                # conf_metrix.to_csv(self.path + "/conf.csv")
 
             stdout.write(
                 "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
