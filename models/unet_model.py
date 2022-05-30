@@ -15,7 +15,7 @@ from tensorflow.keras.layers import (
     MaxPooling3D,
     UpSampling3D,
 )
-
+from sklearn.metrics import confusion_matrix
 
 class UNet3D:
     def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
@@ -102,7 +102,8 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent
+        conf_metrix = confusion_matrix(target.argmax(axis=-1), output.argmax(axis=-1))
+        return dice_loss, dice_percent, conf_metrix
 
     def train(self, train_gen, valid_gen, epochs):
 
@@ -145,7 +146,7 @@ class UNet3D:
             )
 
             for Xb, yb in valid_gen:
-                losses_val = self.test_step(Xb, yb)
+                losses_val, conf_metrix = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
@@ -156,6 +157,7 @@ class UNet3D:
                 )
             )
             stdout.flush()
+            print(conf_metrix)
             history["valid"].append(
                 [
                     epoch_dice_loss_val.result(),
