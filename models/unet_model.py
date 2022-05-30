@@ -150,13 +150,13 @@ class UNet3D:
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
-            stdout.write(
-                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
-                    epoch_dice_loss_val.result(),
-                    epoch_dice_loss_percent_val.result(),
+                stdout.write(
+                    "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
+                        epoch_dice_loss_val.result(),
+                        epoch_dice_loss_percent_val.result(),
+                    )
                 )
-            )
-            stdout.flush()
+                stdout.flush()
             history["valid"].append(
                 [
                     epoch_dice_loss_val.result(),
@@ -166,12 +166,9 @@ class UNet3D:
 
             # save pred image at epoch e
             y_pred = self.model.predict(Xb)
-            print(y_pred.shape)
             y_true = np.argmax(yb, axis=-1)
-            print(y_true.shape)
             y_pred = np.argmax(y_pred, axis=-1)
-            print(y_pred.shape)
-            print(classification_report(y_true, y_pred))
+            print(confusion_matrix(y_true, y_pred))
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
