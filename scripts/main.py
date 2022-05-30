@@ -67,8 +67,6 @@ ds = args.dataset
 num_patches = args.num_patch
 aug = True if args.augmentation == 1 else False
 
-classes = np.arange(n_classes)
-
 # class weights
 class_weights = np.array([0.25659472, 45.465614, 16.543337, 49.11155], dtype="f")
 

@@ -172,7 +172,6 @@ class UNet3D:
                 confusion_matrix(
                     y_true.flatten(),
                     y_pred.flatten(),
-                    labels=["BG", "ED", "NCR/NET", "ET"],
                 )
             )
 
