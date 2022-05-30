@@ -15,7 +15,8 @@ from tensorflow.keras.layers import (
     MaxPooling3D,
     UpSampling3D,
 )
-from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.metrics import confusion_matrix
+
 
 class UNet3D:
     def __init__(self, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5):
@@ -102,8 +103,6 @@ class UNet3D:
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        # conf_metrix = classification_report(tf.math.argmax(target, axis=-1), tf.math.argmax(output, axis=-1))
-        # print(conf_metrix)
         return dice_loss, dice_percent
 
     def train(self, train_gen, valid_gen, epochs):
@@ -151,7 +150,7 @@ class UNet3D:
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
                 stdout.write(
-                    "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
+                    "dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
                         epoch_dice_loss_val.result(),
                         epoch_dice_loss_percent_val.result(),
                     )
@@ -169,7 +168,13 @@ class UNet3D:
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
             print()
-            print(confusion_matrix(y_true.flatten(), y_pred.flatten()))
+            print(
+                confusion_matrix(
+                    y_true.flatten(),
+                    y_pred.flatten(),
+                    labels=["BG", "ED", "NCR/NET", "ET"],
+                )
+            )
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
