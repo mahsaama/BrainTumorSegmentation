@@ -149,7 +149,6 @@ class UNet3D:
                 losses_val = self.test_step(Xb, yb)
                 epoch_dice_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
-                # conf_metrix.to_csv(self.path + "/conf.csv")
 
             stdout.write(
                 "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
@@ -169,7 +168,7 @@ class UNet3D:
             y_pred = self.model.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
-            print(confusion_matrix(y_true, y_pred))
+            print(classification_report(y_true, y_pred))
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
