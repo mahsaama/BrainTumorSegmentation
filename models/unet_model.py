@@ -92,20 +92,20 @@ class UNet3D:
         with tf.GradientTape() as tape:
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
-            per_class_dice = per_class_dice(target, output, self.class_weights)
+            dice_per_class = per_class_dice(target, output, self.class_weights)
             
         gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent, per_class_dice
+        return dice_loss, dice_percent, dice_per_class
 
     @tf.function
     def test_step(self, image, target):
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        per_class_dice = per_class_dice(target, output, self.class_weights)
-        return dice_loss, dice_percent, per_class_dice
+        dice_per_class = per_class_dice(target, output, self.class_weights)
+        return dice_loss, dice_percent, dice_per_class
 
     def train(self, train_gen, valid_gen, epochs):
 
