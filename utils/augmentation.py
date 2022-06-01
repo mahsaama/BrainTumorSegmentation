@@ -48,12 +48,9 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
     return X_patches, y_patches
 
 
-def tumor_removment(X, y):
-    values, counts = np.unique(X, return_counts=True)
-    ind = np.argmax(counts)
-    print(values[ind])  
+def tumor_removment(X, y):  
     for channel in range(X.shape[-1]):
-        X[:, :, :, channel][y != 0] = -100
+        X[:, :, :, channel][y != 0] = 0
     y[y != 0] = 0
     return X, y
 
@@ -244,7 +241,7 @@ def combine_aug(X, y, do):
         return Xnew, ynew
 
     else:
-        do = 6
+        do = np.random.randint(low=6, high=8)
         if do == 0:
             Xnew, ynew = flip3D(Xnew, ynew)
         elif do == 1:
@@ -259,8 +256,8 @@ def combine_aug(X, y, do):
             Xnew, ynew = swirl3D(Xnew, ynew)
         elif do == 6:
             Xnew, ynew = tumor_removment(Xnew, ynew)
-        # elif do == 7:
-        #     Xnew, ynew = one_class_flip(Xnew, ynew)
+        elif do == 7:
+            Xnew, ynew = one_class_flip(Xnew, ynew)
         return Xnew, ynew
 
 
@@ -271,7 +268,7 @@ def aug_batch(Xb, Yb):
     batch_size = len(Xb)
     newXb, newYb = np.empty_like(Xb), np.empty_like(Yb)
 
-    decisions = random_decisions(batch_size, 7)
+    decisions = random_decisions(batch_size, 8)
     inputs = [(X, y, do) for X, y, do in zip(Xb, Yb, decisions)]
     pool = mp.Pool(processes=8)
     multi_result = pool.starmap(combine_aug, inputs)
