@@ -241,7 +241,6 @@ def combine_aug(X, y, do):
         return Xnew, ynew
 
     else:
-        do = np.random.randint(low=6, high=8)
         if do == 0:
             Xnew, ynew = flip3D(Xnew, ynew)
         elif do == 1:
