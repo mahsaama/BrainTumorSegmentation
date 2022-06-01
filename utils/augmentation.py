@@ -22,16 +22,16 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
     y_patches = np.empty((batch_size * Npatches, sizePatches, sizePatches, sizePatches))
     i = 0
     for b in range(batch_size):
-    #     for m in range(0, rows, sizePatches):
-    #         for n in range(0, columns, sizePatches):
-    #             for o in range(0, slices, sizePatches):
-    #                 X_patches[i] = Xb[
-    #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches, :
-    #                 ]
-    #                 y_patches[i] = yb[
-    #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches
-    #                 ]
-    #                 i += 1
+        #     for m in range(0, rows, sizePatches):
+        #         for n in range(0, columns, sizePatches):
+        #             for o in range(0, slices, sizePatches):
+        #                 X_patches[i] = Xb[
+        #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches, :
+        #                 ]
+        #                 y_patches[i] = yb[
+        #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches
+        #                 ]
+        #                 i += 1
         for p in range(Npatches):
             x = np.random.randint(rows - sizePatches + 1)
             y = np.random.randint(columns - sizePatches + 1)
@@ -46,6 +46,12 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
             i += 1
 
     return X_patches, y_patches
+
+
+def tumor_removment(X, y):
+    for channel in range(X.shape(-1)):
+        X[:, :, :, channel][y != 0] = -100
+    y[y != 0] = 0
 
 
 def shift3D(X, y, shift_stds=[20, 20, 20]):
@@ -86,6 +92,33 @@ def swirl3D(X, y, radius=100, strenght_std=1):
     y_swapped = np.swapaxes(y_swapped, ax1, ax2)
 
     return X_swapped, y_swapped
+
+
+def one_class_flip(X, y):
+    """
+    Flip a class in 3D image respect one of the 3 axis chosen randomly
+    """
+    choice = np.random.randint(3)
+    label = np.random.randint(low=1, high=4)
+
+    X_flip = np.empty_like(X)
+    y_flip = np.empty_like(y)
+
+    for channel in range(X.shape[0]):
+        if choice == 0:  # flip on x
+            X_flip[:, :, :, channel], y_flip = np.where(
+                y == label, X[::-1, :, :, channel], X[:, :, :, channel]
+            ), np.where(y == label, y[::-1, :, :], y)
+        if choice == 1:  # flip on y
+            X_flip[:, :, :, channel], y_flip = np.where(
+                y == label, X[:, ::-1, :, channel], X[:, :, :, channel]
+            ), np.where(y == label, y[:, ::-1, :], y)
+        if choice == 2:  # flip on z
+            X_flip[:, :, :, channel], y_flip = np.where(
+                y == label, X[:, :, ::-1, channel], X[:, :, :, channel]
+            ), np.where(y == label, y[:, :, ::-1], y)
+
+    return X_flip, y_flip
 
 
 def flip3D(X, y):
@@ -187,7 +220,9 @@ def random_decisions(N, n_aug_techs=6):
     N should be equal to the batch size
     """
 
-    decisions = np.zeros(N)  # 4 is number of aug techniques to combine (patch extraction excluded)
+    decisions = np.zeros(
+        N
+    )  # 4 is number of aug techniques to combine (patch extraction excluded)
     for n in range(N):
         decisions[n] = np.random.randint(n_aug_techs)
 
@@ -217,7 +252,10 @@ def combine_aug(X, y, do):
             Xnew, ynew = shift3D(Xnew, ynew)
         elif do == 5:
             Xnew, ynew = swirl3D(Xnew, ynew)
-
+        elif do == 6:
+            Xnew, ynew = tumor_removment(Xnew, ynew)
+        elif do == 7:
+            Xnew, ynew = one_class_flip(Xnew, ynew)
         return Xnew, ynew
 
 
@@ -228,7 +266,7 @@ def aug_batch(Xb, Yb):
     batch_size = len(Xb)
     newXb, newYb = np.empty_like(Xb), np.empty_like(Yb)
 
-    decisions = random_decisions(batch_size, 6)
+    decisions = random_decisions(batch_size, 8)
     inputs = [(X, y, do) for X, y, do in zip(Xb, Yb, decisions)]
     pool = mp.Pool(processes=8)
     multi_result = pool.starmap(combine_aug, inputs)
