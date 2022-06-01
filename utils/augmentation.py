@@ -104,7 +104,7 @@ def one_class_flip(X, y):
     X_flip = np.empty_like(X)
     y_flip = np.empty_like(y)
 
-    for channel in range(X.shape[0]):
+    for channel in range(X.shape[-1]):
         if choice == 0:  # flip on x
             X_flip[:, :, :, channel], y_flip = np.where(
                 y == label, X[::-1, :, :, channel], X[:, :, :, channel]
@@ -254,8 +254,8 @@ def combine_aug(X, y, do):
             Xnew, ynew = swirl3D(Xnew, ynew)
         elif do == 6:
             Xnew, ynew = tumor_removment(Xnew, ynew)
-        elif do == 7:
-            Xnew, ynew = one_class_flip(Xnew, ynew)
+        # elif do == 7:
+        #     Xnew, ynew = one_class_flip(Xnew, ynew)
         return Xnew, ynew
 
 
@@ -266,7 +266,7 @@ def aug_batch(Xb, Yb):
     batch_size = len(Xb)
     newXb, newYb = np.empty_like(Xb), np.empty_like(Yb)
 
-    decisions = random_decisions(batch_size, 8)
+    decisions = random_decisions(batch_size, 7)
     inputs = [(X, y, do) for X, y, do in zip(Xb, Yb, decisions)]
     pool = mp.Pool(processes=8)
     multi_result = pool.starmap(combine_aug, inputs)
