@@ -49,7 +49,9 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
 
 
 def tumor_removment(X, y):
-    print(X[np.where(X == 0)].size)
+    values, counts = np.unique(X, return_counts=True)
+    ind = np.argmax(counts)
+    print(values[ind])  
     for channel in range(X.shape[-1]):
         X[:, :, :, channel][y != 0] = -100
     y[y != 0] = 0
