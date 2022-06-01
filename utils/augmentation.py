@@ -52,6 +52,7 @@ def tumor_removment(X, y):
     for channel in range(X.shape(-1)):
         X[:, :, :, channel][y != 0] = -100
     y[y != 0] = 0
+    return X, y
 
 
 def shift3D(X, y, shift_stds=[20, 20, 20]):
@@ -240,6 +241,7 @@ def combine_aug(X, y, do):
         return Xnew, ynew
 
     else:
+        do = 6
         if do == 0:
             Xnew, ynew = flip3D(Xnew, ynew)
         elif do == 1:
