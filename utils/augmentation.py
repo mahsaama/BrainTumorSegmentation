@@ -49,7 +49,7 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
 
 
 def tumor_removment(X, y):
-    for channel in range(X.shape(-1)):
+    for channel in range(X.shape[-1]):
         X[:, :, :, channel][y != 0] = -100
     y[y != 0] = 0
     return X, y
