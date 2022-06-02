@@ -107,17 +107,18 @@ def one_class_flip(X, y):
 
     for channel in range(X.shape[-1]):
         if choice == 0:  # flip on x
-            X_flip[:, :, :, channel], y_flip = np.where(
-                y == label, X[::-1, :, :, channel], X[:, :, :, channel]
-            ), np.where(y == label, y[::-1, :, :], y)
+            X_flip[:, :, :, channel] = np.where(y == label, X[::-1, :, :, channel], X[:, :, :, channel])
         if choice == 1:  # flip on y
-            X_flip[:, :, :, channel], y_flip = np.where(
-                y == label, X[:, ::-1, :, channel], X[:, :, :, channel]
-            ), np.where(y == label, y[:, ::-1, :], y)
+            X_flip[:, :, :, channel] = np.where(y == label, X[:, ::-1, :, channel], X[:, :, :, channel])
         if choice == 2:  # flip on z
-            X_flip[:, :, :, channel], y_flip = np.where(
-                y == label, X[:, :, ::-1, channel], X[:, :, :, channel]
-            ), np.where(y == label, y[:, :, ::-1], y)
+            X_flip[:, :, :, channel] = np.where(y == label, X[:, :, ::-1, channel], X[:, :, :, channel])
+    
+    if choice == 0:  # flip on x
+        y_flip = np.where(y == label, y[::-1, :, :], y)
+    if choice == 1:  # flip on y
+        y_flip = np.where(y == label, y[:, ::-1, :], y)
+    if choice == 2:  # flip on z
+        y_flip = np.where(y == label, y[:, :, ::-1], y)
 
     return X_flip, y_flip
 
