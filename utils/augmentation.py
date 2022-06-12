@@ -254,10 +254,10 @@ def combine_aug(X, y, do):
             Xnew, ynew = shift3D(Xnew, ynew)
         elif do == 5:
             Xnew, ynew = swirl3D(Xnew, ynew)
-        elif do == 6:
-            Xnew, ynew = tumor_removment(Xnew, ynew)
-        elif do == 7:
-            Xnew, ynew = one_class_flip(Xnew, ynew)
+        # elif do == 6:
+        #     Xnew, ynew = tumor_removment(Xnew, ynew)
+        # elif do == 7:
+        #     Xnew, ynew = one_class_flip(Xnew, ynew)
         return Xnew, ynew
 
 
@@ -268,7 +268,7 @@ def aug_batch(Xb, Yb):
     batch_size = len(Xb)
     newXb, newYb = np.empty_like(Xb), np.empty_like(Yb)
 
-    decisions = random_decisions(batch_size, 8)
+    decisions = random_decisions(batch_size, 6)
     inputs = [(X, y, do) for X, y, do in zip(Xb, Yb, decisions)]
     pool = mp.Pool(processes=8)
     multi_result = pool.starmap(combine_aug, inputs)
