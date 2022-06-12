@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-from utils.losses import discriminator_loss, generator_loss
+from utils.losses import discriminator_loss, generator_loss, per_class_dice
 from utils.utils import sec_to_minute
 from sys import stdout
 import matplotlib.image as mpim
@@ -22,11 +22,21 @@ from tensorflow.keras.layers import (
 )
 from tensorflow_addons.layers import InstanceNormalization
 from utils.deformable_conv_3d import DCN3D
-
+from sklearn.metrics import confusion_matrix
 
 
 class AttGANDCN:
-    def __init__(self, batch_size, patch_size, n_classes, class_weights, path, lr=2e-4, beta_1=0.5, alpha=5):
+    def __init__(
+        self,
+        batch_size,
+        patch_size,
+        n_classes,
+        class_weights,
+        path,
+        lr=2e-4,
+        beta_1=0.5,
+        alpha=5,
+    ):
         self.batch_size = batch_size
         self.patch_size = patch_size
         self.n_classes = n_classes
@@ -57,9 +67,11 @@ class AttGANDCN:
             psi = Activation("sigmoid")(psi)
 
             return Multiply()([F_l, psi])
-        
+
         def encoder_step(layer, Nf, ks, norm=True):
-            x = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(layer)
+            x = DCN3D(
+                Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal"
+            )(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -75,7 +87,9 @@ class AttGANDCN:
             return x
 
         def bottlenek(layer, Nf, ks):
-            x = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(layer)
+            x = DCN3D(
+                Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal"
+            )(layer)
             # x = Conv3D(
             #     Nf,
             #     kernel_size=ks,
@@ -86,7 +100,13 @@ class AttGANDCN:
             x = InstanceNormalization()(x)
             x = LeakyReLU()(x)
             for i in range(4):
-                y = DCN3D(Nf, ks, self.batch_size, activation="", kernel_initializer="he_normal")(x)
+                y = DCN3D(
+                    Nf,
+                    ks,
+                    self.batch_size,
+                    activation="",
+                    kernel_initializer="he_normal",
+                )(x)
                 # y = Conv3D(
                 #     Nf,
                 #     kernel_size=ks,
@@ -117,7 +137,10 @@ class AttGANDCN:
             return x
 
         layers_to_concatenate = []
-        inputs = Input((self.patch_size, self.patch_size, self.patch_size, self.n_classes), name="input_image")
+        inputs = Input(
+            (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
+            name="input_image",
+        )
         Nfilter_start = self.patch_size // 2
         ks = 4
 
@@ -155,8 +178,14 @@ class AttGANDCN:
         """
         Discriminator model
         """
-        inputs = Input((self.patch_size, self.patch_size, self.patch_size, self.n_classes), name="input_image")
-        targets = Input((self.patch_size, self.patch_size, self.patch_size, self.n_classes), name="target_image")
+        inputs = Input(
+            (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
+            name="input_image",
+        )
+        targets = Input(
+            (self.patch_size, self.patch_size, self.patch_size, self.n_classes),
+            name="target_image",
+        )
         Nfilter_start = self.patch_size // 2
         depth = 3
         ks = 4
@@ -219,39 +248,53 @@ class AttGANDCN:
 
             disc_real_output = self.D([image, target], training=True)
             disc_fake_output = self.D([image, gen_output], training=True)
-            
+
             disc_loss = discriminator_loss(disc_real_output, disc_fake_output)
-            gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, self.alpha)
+            gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(
+                target, gen_output, disc_fake_output, self.class_weights, self.alpha
+            )
+
+            dice_per_class = per_class_dice(target, gen_output, self.class_weights)
 
         generator_gradients = gen_tape.gradient(gen_loss, self.G.trainable_variables)
-        discriminator_gradients = disc_tape.gradient(disc_loss, self.D.trainable_variables)
+        discriminator_gradients = disc_tape.gradient(
+            disc_loss, self.D.trainable_variables
+        )
 
-        self.G_optimizer.apply_gradients(zip(generator_gradients, self.G.trainable_variables))
-        self.D_optimizer.apply_gradients(zip(discriminator_gradients, self.D.trainable_variables))
-        
-        return gen_loss, dice_loss, disc_loss_gen, dice_percent
-            
+        self.G_optimizer.apply_gradients(
+            zip(generator_gradients, self.G.trainable_variables)
+        )
+        self.D_optimizer.apply_gradients(
+            zip(discriminator_gradients, self.D.trainable_variables)
+        )
+
+        return gen_loss, dice_loss, disc_loss_gen, dice_percent, dice_per_class
+
     @tf.function
     def test_step(self, image, target):
         gen_output = self.G(image, training=False)
 
         disc_real_output = self.D([image, target], training=False)
         disc_fake_output = self.D([image, gen_output], training=False)
-        
+
         disc_loss = discriminator_loss(disc_real_output, disc_fake_output)
-        gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(target, gen_output, disc_fake_output, self.class_weights, self.alpha)
-        
-        return gen_loss, dice_loss, disc_loss_gen, dice_percent
+        gen_loss, dice_loss, disc_loss_gen, dice_percent = generator_loss(
+            target, gen_output, disc_fake_output, self.class_weights, self.alpha
+        )
+
+        dice_per_class = per_class_dice(target, gen_output, self.class_weights)
+
+        return gen_loss, dice_loss, disc_loss_gen, dice_percent, dice_per_class
 
     def train(self, train_gen, valid_gen, epochs):
 
-        if os.path.exists(self.path)==False:
+        if os.path.exists(self.path) == False:
             os.mkdir(self.path)
-            
+
         Nt = len(train_gen)
-        history = {'train': [], 'valid': []}
+        history = {"train": [], "valid": []}
         prev_loss = np.inf
-        
+
         epoch_v2v_loss = tf.keras.metrics.Mean()
         epoch_dice_loss = tf.keras.metrics.Mean()
         epoch_disc_loss = tf.keras.metrics.Mean()
@@ -260,9 +303,9 @@ class AttGANDCN:
         epoch_dice_loss_val = tf.keras.metrics.Mean()
         epoch_disc_loss_val = tf.keras.metrics.Mean()
         epoch_dp_val = tf.keras.metrics.Mean()
-        
+
         for e in range(epochs):
-            print('Epoch {}/{}'.format(e+1,epochs))
+            print("Epoch {}/{}".format(e + 1, epochs))
             start = time.time()
             b = 0
             for Xb, yb in train_gen:
@@ -272,51 +315,103 @@ class AttGANDCN:
                 epoch_dice_loss.update_state(losses[1])
                 epoch_disc_loss.update_state(losses[2])
                 epoch_dp.update_state(losses[3])
-                
-                stdout.write('\rBatch: {}/{} - loss: {:.4f} - dice_loss: {:.4f} - disc_loss: {:.4f} - dice_percentage: {:.4f}% '
-                            .format(b, Nt, epoch_v2v_loss.result(), epoch_dice_loss.result(), epoch_disc_loss.result(), epoch_dp.result()))
+
+                stdout.write(
+                    "\rBatch: {}/{} - loss: {:.4f} - dice_loss: {:.4f} - disc_loss: {:.4f} - dice_percentage: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
+                        b,
+                        Nt,
+                        epoch_v2v_loss.result(),
+                        epoch_dice_loss.result(),
+                        epoch_disc_loss.result(),
+                        epoch_dp.result(),
+                        losses[2][0],
+                        losses[2][1],
+                        losses[2][2],
+                    )
+                )
                 stdout.flush()
-            history['train'].append([epoch_v2v_loss.result(), epoch_dice_loss.result(), epoch_disc_loss.result(), epoch_dp.result()])
-            
+            history["train"].append(
+                [
+                    epoch_v2v_loss.result(),
+                    epoch_dice_loss.result(),
+                    epoch_disc_loss.result(),
+                    epoch_dp.result(),
+                ]
+            )
+
             for Xb, yb in valid_gen:
                 losses_val = self.test_step(Xb, yb)
                 epoch_v2v_loss_val.update_state(losses_val[0])
                 epoch_dice_loss_val.update_state(losses_val[1])
                 epoch_disc_loss_val.update_state(losses_val[2])
                 epoch_dp_val.update_state(losses_val[3])
-                
-            stdout.write('\n               loss_val: {:.4f} - dice_loss_val: {:.4f} - disc_loss_val: {:.4f} - dice_percentage_val: {:.4f}% '
-                        .format(epoch_v2v_loss_val.result(), epoch_dice_loss_val.result(), epoch_disc_loss_val.result(), epoch_dp_val.result()))
+
+            stdout.write(
+                "\n               loss_val: {:.4f} - dice_loss_val: {:.4f} - disc_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
+                    epoch_v2v_loss_val.result(),
+                    epoch_dice_loss_val.result(),
+                    epoch_disc_loss_val.result(),
+                    epoch_dp_val.result(),
+                    losses_val[2][0],
+                    losses_val[2][1],
+                    losses_val[2][2],
+                )
+            )
             stdout.flush()
-            history['valid'].append([epoch_v2v_loss_val.result(), epoch_dice_loss_val.result(), epoch_disc_loss_val.result(), epoch_dp_val.result()])
-            
-            # save pred image at epoch e 
+            history["valid"].append(
+                [
+                    epoch_v2v_loss_val.result(),
+                    epoch_dice_loss_val.result(),
+                    epoch_disc_loss_val.result(),
+                    epoch_dp_val.result(),
+                ]
+            )
+
+            # save pred image at epoch e
             y_pred = self.G.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
+            
+            print()
+            print(
+                confusion_matrix(
+                    y_true.flatten(),
+                    y_pred.flatten(),
+                )
+            )
 
             patch_size = valid_gen.patch_size
-            canvas = np.zeros((patch_size, patch_size*3))
+            canvas = np.zeros((patch_size, patch_size * 3))
             idx = np.random.randint(len(Xb))
-            
-            x = Xb[idx,:,:,patch_size//2,2] 
-            canvas[0:patch_size, 0:patch_size] = (x - np.min(x))/(np.max(x)-np.min(x)+1e-6)
-            canvas[0:patch_size, patch_size:2*patch_size] = y_true[idx,:,:,patch_size//2]/3
-            canvas[0:patch_size, 2*patch_size:3*patch_size] = y_pred[idx,:,:,patch_size//2]/3
-            
-            fname = (self.path + '/pred@epoch_{:03d}.png').format(e+1)
-            mpim.imsave(fname, canvas, cmap='gray')
-            
+
+            x = Xb[idx, :, :, patch_size // 2, 2]
+            canvas[0:patch_size, 0:patch_size] = (x - np.min(x)) / (
+                np.max(x) - np.min(x) + 1e-6
+            )
+            canvas[0:patch_size, patch_size : 2 * patch_size] = (
+                y_true[idx, :, :, patch_size // 2] / 3
+            )
+            canvas[0:patch_size, 2 * patch_size : 3 * patch_size] = (
+                y_pred[idx, :, :, patch_size // 2] / 3
+            )
+
+            fname = (self.path + "/pred@epoch_{:03d}.png").format(e + 1)
+            mpim.imsave(fname, canvas, cmap="gray")
+
             # save models
-            print(' ')
-            if epoch_v2v_loss_val.result() < prev_loss:    
-                self.G.save_weights(self.path + '/Generator.h5') 
-                self.D.save_weights(self.path + '/Discriminator.h5')
-                print("Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(prev_loss, epoch_v2v_loss_val.result()))
+            print(" ")
+            if epoch_v2v_loss_val.result() < prev_loss:
+                self.G.save_weights(self.path + "/Generator.h5")
+                self.D.save_weights(self.path + "/Discriminator.h5")
+                print(
+                    "Validation loss decresaed from {:.4f} to {:.4f}. Models' weights are now saved.".format(
+                        prev_loss, epoch_v2v_loss_val.result()
+                    )
+                )
                 prev_loss = epoch_v2v_loss_val.result()
             else:
                 print("Validation loss did not decrese from {:.4f}.".format(prev_loss))
-            
+
             # resets losses states
             epoch_v2v_loss.reset_states()
             epoch_dice_loss.reset_states()
@@ -326,11 +421,11 @@ class AttGANDCN:
             epoch_dice_loss_val.reset_states()
             epoch_disc_loss_val.reset_states()
             epoch_dp_val.reset_states()
-            
+
             del Xb, yb, canvas, y_pred, y_true, idx
-            print('Time: {}\n'.format(sec_to_minute(time.time()-start)))        
+            print("Time: {}\n".format(sec_to_minute(time.time() - start)))
         return history
-    
+
     def predict(self, test_gen):
         start = time.time()
         i = 0
