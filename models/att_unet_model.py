@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-from utils.losses import diceLoss
+from utils.losses import diceLoss, per_class_dice
 from utils.utils import sec_to_minute
 import matplotlib.image as mpim
 from sys import stdout
@@ -18,6 +18,7 @@ from tensorflow.keras.layers import (
     Add,
     Multiply,
 )
+from sklearn.metrics import confusion_matrix
 
 
 class AttUnet3D:
@@ -113,18 +114,21 @@ class AttUnet3D:
         with tf.GradientTape() as tape:
             output = self.model(image, training=True)
             dice_loss = diceLoss(target, output, self.class_weights)
-
+            dice_per_class = per_class_dice(target, output, self.class_weights)
+            
         gradients = tape.gradient(dice_loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.model.trainable_variables))
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent
+        return dice_loss, dice_percent, dice_per_class
 
     @tf.function
     def test_step(self, image, target):
         output = self.model(image, training=False)
         dice_loss = diceLoss(target, output, self.class_weights)
         dice_percent = (1 - dice_loss) * 100
-        return dice_loss, dice_percent
+        dice_per_class = per_class_dice(target, output, self.class_weights)
+        
+        return dice_loss, dice_percent, dice_per_class
 
     def train(self, train_gen, valid_gen, epochs):
 
@@ -151,11 +155,14 @@ class AttUnet3D:
                 epoch_dice_loss_percent.update_state(losses[1])
 
                 stdout.write(
-                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% ".format(
+                    "\rBatch: {}/{} - dice_loss: {:.4f} - dice_percentage: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
                         b,
                         Nt,
                         epoch_dice_loss.result(),
                         epoch_dice_loss_percent.result(),
+                        losses[-1][0],
+                        losses[-1][1],
+                        losses[-1][2],
                     )
                 )
                 stdout.flush()
@@ -169,8 +176,12 @@ class AttUnet3D:
                 epoch_dice_loss_percent_val.update_state(losses_val[1])
 
             stdout.write(
-                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% ".format(
-                    epoch_dice_loss_val.result(), epoch_dice_loss_percent_val.result()
+                "\n               dice_loss_val: {:.4f} - dice_percentage_val: {:.4f}% - WT: {:.4f} - TC: {:.4f} - ET: {:.4f} ".format(
+                    epoch_dice_loss_val.result(),
+                    epoch_dice_loss_percent_val.result(),
+                    losses[-1][0],
+                    losses[-1][1],
+                    losses[-1][2],
                 )
             )
             stdout.flush()
@@ -182,6 +193,14 @@ class AttUnet3D:
             y_pred = self.model.predict(Xb)
             y_true = np.argmax(yb, axis=-1)
             y_pred = np.argmax(y_pred, axis=-1)
+
+            print()
+            print(
+                confusion_matrix(
+                    y_true.flatten(),
+                    y_pred.flatten(),
+                )
+            )
 
             patch_size = valid_gen.patch_size
             canvas = np.zeros((patch_size, patch_size * 3))
