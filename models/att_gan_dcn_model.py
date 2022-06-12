@@ -324,9 +324,9 @@ class AttGANDCN:
                         epoch_dice_loss.result(),
                         epoch_disc_loss.result(),
                         epoch_dp.result(),
-                        losses[2][0],
-                        losses[2][1],
-                        losses[2][2],
+                        losses[-1][0],
+                        losses[-1][1],
+                        losses[-1][2],
                     )
                 )
                 stdout.flush()
@@ -352,9 +352,9 @@ class AttGANDCN:
                     epoch_dice_loss_val.result(),
                     epoch_disc_loss_val.result(),
                     epoch_dp_val.result(),
-                    losses_val[2][0],
-                    losses_val[2][1],
-                    losses_val[2][2],
+                    losses_val[-1][0],
+                    losses_val[-1][1],
+                    losses_val[-1][2],
                 )
             )
             stdout.flush()
