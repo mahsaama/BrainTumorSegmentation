@@ -59,7 +59,7 @@ def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
     """
 
     batch_size, rows, columns, slices, channels = Xb.shape
-    # Npatches = (rows * columns * slices) // (sizePatches ** 3)
+    Npatches = (rows * columns * slices) // (sizePatches ** 3)
     X_patches = np.empty(
         (batch_size * Npatches, sizePatches, sizePatches, sizePatches, channels)
     )
