@@ -2,7 +2,7 @@ import numpy as np
 import tensorflow as tf
 import nibabel as nib
 from tensorflow.keras.utils import to_categorical
-from .augmentation import *
+from .augmentation import aug_batch
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 import os
@@ -53,6 +53,43 @@ def load_img(img_files):
 
     return X_norm, y
 
+def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
+    """
+    3D patch extraction
+    """
+
+    batch_size, rows, columns, slices, channels = Xb.shape
+    # Npatches = (rows * columns * slices) // (sizePatches ** 3)
+    X_patches = np.empty(
+        (batch_size * Npatches, sizePatches, sizePatches, sizePatches, channels)
+    )
+    y_patches = np.empty((batch_size * Npatches, sizePatches, sizePatches, sizePatches))
+    i = 0
+    for b in range(batch_size):
+        for m in range(0, rows, sizePatches):
+            for n in range(0, columns, sizePatches):
+                for o in range(0, slices, sizePatches):
+                    X_patches[i] = Xb[
+                        b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches, :
+                    ]
+                    y_patches[i] = yb[
+                        b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches
+                    ]
+                    i += 1
+        # for p in range(Npatches):
+        #     x = np.random.randint(rows - sizePatches + 1)
+        #     y = np.random.randint(columns - sizePatches + 1)
+        #     z = np.random.randint(slices - sizePatches + 1)
+
+        #     X_patches[i] = Xb[
+        #         b, x : x + sizePatches, y : y + sizePatches, z : z + sizePatches, :
+        #     ]
+        #     y_patches[i] = yb[
+        #         b, x : x + sizePatches, y : y + sizePatches, z : z + sizePatches
+        #     ]
+        #     i += 1
+
+    return X_patches, y_patches
 
 class DataGenerator(tf.keras.utils.Sequence):
     "Generates data for Keras"
@@ -95,6 +132,7 @@ class DataGenerator(tf.keras.utils.Sequence):
 
         # Generate data
         X, y = self.__data_generation(list_IDs_temp)
+        
         if self.augmentation == True:
             X, y = self.__data_augmentation(X, y)
 
@@ -120,19 +158,16 @@ class DataGenerator(tf.keras.utils.Sequence):
             # Store sample
             X[i], y[i] = load_img(IDs)
 
+        X_aug, y_aug = patch_extraction(
+            X, y, sizePatches=self.patch_size, Npatches=self.n_patches
+        )
+        
         if self.augmentation == True:
             return X.astype("float32"), y
         else:
-            X_aug, y_aug = patch_extraction(
-                X, y, sizePatches=self.patch_size, Npatches=self.n_patches
-            )
             return X_aug.astype("float32"), to_categorical(y_aug, self.n_classes)
 
     def __data_augmentation(self, X, y):
         "Apply augmentation"
-        X_aug, y_aug = patch_extraction(
-            X, y, sizePatches=self.patch_size, Npatches=self.n_patches
-        )
-        X_aug, y_aug = aug_batch(X_aug, y_aug)
-
+        X_aug, y_aug = aug_batch(X, y)
         return X_aug, to_categorical(y_aug, self.n_classes)

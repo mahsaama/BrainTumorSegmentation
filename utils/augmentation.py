@@ -9,45 +9,6 @@ from scipy.stats import truncnorm
 import matplotlib.pyplot as plt
 
 
-def patch_extraction(Xb, yb, sizePatches=128, Npatches=1):
-    """
-    3D patch extraction
-    """
-
-    batch_size, rows, columns, slices, channels = Xb.shape
-    # Npatches = (rows * columns * slices) // (sizePatches ** 3)
-    X_patches = np.empty(
-        (batch_size * Npatches, sizePatches, sizePatches, sizePatches, channels)
-    )
-    y_patches = np.empty((batch_size * Npatches, sizePatches, sizePatches, sizePatches))
-    i = 0
-    for b in range(batch_size):
-        #     for m in range(0, rows, sizePatches):
-        #         for n in range(0, columns, sizePatches):
-        #             for o in range(0, slices, sizePatches):
-        #                 X_patches[i] = Xb[
-        #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches, :
-        #                 ]
-        #                 y_patches[i] = yb[
-        #                     b, m : m + sizePatches, n : n + sizePatches, o : o + sizePatches
-        #                 ]
-        #                 i += 1
-        for p in range(Npatches):
-            x = np.random.randint(rows - sizePatches + 1)
-            y = np.random.randint(columns - sizePatches + 1)
-            z = np.random.randint(slices - sizePatches + 1)
-
-            X_patches[i] = Xb[
-                b, x : x + sizePatches, y : y + sizePatches, z : z + sizePatches, :
-            ]
-            y_patches[i] = yb[
-                b, x : x + sizePatches, y : y + sizePatches, z : z + sizePatches
-            ]
-            i += 1
-
-    return X_patches, y_patches
-
-
 def tumor_removment(X, y):  
     for channel in range(X.shape[-1]):
         X[:, :, :, channel][y != 0] = 0
