@@ -163,7 +163,7 @@ class DataGenerator(tf.keras.utils.Sequence):
         )
         
         if self.augmentation == True:
-            return X.astype("float32"), y
+            return X_aug.astype("float32"), y_aug
         else:
             return X_aug.astype("float32"), to_categorical(y_aug, self.n_classes)
 
